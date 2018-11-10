@@ -74,6 +74,7 @@ def world_to_map(x, y, my_map):
         :return: tuple of converted point
     """
 
+
 def map_to_world(x, y, my_map):
     """
         converts a point from the map to the world
@@ -85,7 +86,7 @@ def map_to_world(x, y, my_map):
 
 def to_cells(points, my_map):
     """
-        Creates a GridCell() for Rviz distplay
+        Creates a GridCell() for Rviz display
         :param points: list of tuples
         :return: GridCell()
     """
