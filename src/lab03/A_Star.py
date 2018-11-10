@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 import rospy
+from nav_msgs.msg import OccupancyGrid
+import map_helper
 
 
 class A_Star:
@@ -11,9 +13,11 @@ class A_Star:
             It is accessed using a service call. It can the publish grid cells
             to show the frontier,closed and path.
         """
-
         rospy.init_node("a_star")  # start node
- 
+
+        rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
+        rospy.loginfo("Initializing A_Star")
+
 
     def handle_a_star(self, req):
 
@@ -25,17 +29,24 @@ class A_Star:
         """
         pass
 
-       
-
-    def dynamic_map_client(self):
+    def dynamic_map_client(self, new_map):
 
         """
             Service call to get map and set class variables
             This can be changed to call the expanded map
             :return:
         """
-        pass
+        rospy.loginfo("Getting map")
 
+        self.map = new_map
+        rospy.loginfo("Resolution is: %s" % new_map.info.resolution)
+        # try:
+        #     get_map = rospy.ServiceProxy('map', GetMap)
+        #     resp1 = get_map()
+        #     rospy.loginfo(get_map.map)
+        # except rospy.ServiceException, e:
+        #     print "Service call failed: %s" % e
+        # pass
 
     def a_star(self, start, goal):
         """
@@ -47,7 +58,6 @@ class A_Star:
         """
         pass
 
-      
     def euclidean_heuristic(self, point1, point2):
         """
             calculate the dist between two points
@@ -55,6 +65,7 @@ class A_Star:
             :param point2: tuple of location
             :return: dist between two points
         """
+
     pass
 
     def move_cost(self, current, next):
@@ -66,7 +77,6 @@ class A_Star:
         """
         pass
 
-
     def reconstruct_path(self, start, goal, came_from):
         """
             Rebuild the path from a dictionary
@@ -75,8 +85,8 @@ class A_Star:
             :param came_from: dictionary of tuples
             :return: list of tuples
        """
-       pass
-  
+
+    pass
 
     def optimize_path(self, path):
         """
@@ -96,7 +106,6 @@ class A_Star:
         """
         pass
 
-
     def publish_path(self, points):
         """
             Create a Path() and publishes the cells if Paint is true
@@ -107,4 +116,8 @@ class A_Star:
 
 
 if __name__ == '__main__':
+    astar = A_Star()
+    rospy.loginfo("Initializing A_Star")
+    # astar.dynamic_map_client()
+    rospy.spin()
     pass

@@ -20,8 +20,6 @@ def is_valid_loc(loc, my_map):
         :return: boolean is a legal point
     """
 
-  
-
 
 def convert_location(loc, my_map):
     """converts points to the grid"""
@@ -35,6 +33,7 @@ def world_to_map(x, y, my_map):
         :return: tuple of converted point
     """
 
+
 def map_to_world(x, y, my_map):
     """
         converts a point from the map to the world
@@ -46,7 +45,7 @@ def map_to_world(x, y, my_map):
 
 def to_cells(points, my_map):
     """
-        Creates a GridCell() for Rviz distplay
+        Creates a GridCell() for Rviz display
         :param points: list of tuples
         :return: GridCell()
     """
