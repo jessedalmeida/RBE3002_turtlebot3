@@ -101,18 +101,15 @@ def to_grid_cells(index2ds, my_map):
 
     grid = GridCells()
     grid.header.frame_id = "/odom"
-    grid.cell_height = 1#my_map.info.resolution
-    grid.cell_width = 1#my_map.info.resolution
+    grid.cell_height = my_map.info.resolution
+    grid.cell_width = my_map.info.resolution
 
     grid.cells = []
-    i = 1
     # Fill in points
     for index2d in index2ds:
         point = Point()
-        point.x, point.y = (i, i)#index2d_to_point(index2d, my_map)
-        print(point)
+        point.x, point.y = index2d_to_point(index2d, my_map)
         grid.cells.append(point)
-        i += 1
 
     return grid
 
