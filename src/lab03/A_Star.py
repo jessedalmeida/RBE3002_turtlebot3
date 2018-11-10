@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-
+import map_helper
 
 class A_Star:
 
@@ -13,7 +13,7 @@ class A_Star:
         """
 
         rospy.init_node("a_star")  # start node
- 
+
 
     def handle_a_star(self, req):
 
@@ -25,7 +25,7 @@ class A_Star:
         """
         pass
 
-       
+
 
     def dynamic_map_client(self):
 
@@ -47,7 +47,7 @@ class A_Star:
         """
         pass
 
-      
+
     def euclidean_heuristic(self, point1, point2):
         """
             calculate the dist between two points
@@ -74,9 +74,10 @@ class A_Star:
             :param goal: starting value
             :param came_from: dictionary of tuples
             :return: list of tuples
-       """
-       pass
-  
+        """
+
+    pass
+
 
     def optimize_path(self, path):
         """
@@ -85,6 +86,7 @@ class A_Star:
             :return: reduced list of tuples
         """
         pass
+
 
     def paint_cells(self, frontier, came_from):
         # type: (list, list) -> None

@@ -1,9 +1,8 @@
 #!/usr/bin/env python
 import sys
 import rospy
-from nav_msgs.msg import OccupancyGrid, GridCells, Path
+from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
-
 
 def get_neighbors(loc, my_map):
     """
@@ -11,6 +10,7 @@ def get_neighbors(loc, my_map):
         :param loc: tuple of location
         :return: list of tuples
     """
+
   
 
 def is_valid_loc(loc, my_map):
@@ -20,7 +20,6 @@ def is_valid_loc(loc, my_map):
         :return: boolean is a legal point
     """
 
-  
 
 
 def convert_location(loc, my_map):
