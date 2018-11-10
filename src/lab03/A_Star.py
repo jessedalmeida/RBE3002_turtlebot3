@@ -13,10 +13,12 @@ class A_Star:
             It is accessed using a service call. It can the publish grid cells
             to show the frontier,closed and path.
         """
+        # Initialize node
         rospy.init_node("a_star")  # start node
 
+        # Setup map subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
-        rospy.loginfo("Initializing A_Star")
+        rospy.logdebug("Initializing A_Star")
 
 
     def handle_a_star(self, req):
@@ -36,17 +38,10 @@ class A_Star:
             This can be changed to call the expanded map
             :return:
         """
-        rospy.loginfo("Getting map")
+        rospy.logdebug("Getting map")
 
         self.map = new_map
-        rospy.loginfo("Resolution is: %s" % new_map.info.resolution)
-        # try:
-        #     get_map = rospy.ServiceProxy('map', GetMap)
-        #     resp1 = get_map()
-        #     rospy.loginfo(get_map.map)
-        # except rospy.ServiceException, e:
-        #     print "Service call failed: %s" % e
-        # pass
+        rospy.logdebug("Resolution is: %s" % new_map.info.resolution)
 
     def a_star(self, start, goal):
         """
@@ -118,6 +113,5 @@ class A_Star:
 if __name__ == '__main__':
     astar = A_Star()
     rospy.loginfo("Initializing A_Star")
-    # astar.dynamic_map_client()
     rospy.spin()
     pass
