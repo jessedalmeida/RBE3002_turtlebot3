@@ -1,0 +1,4 @@
+<launch>
+	<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_empty_world.launch" />
+	<include file="$(find rbe3002)/launch/rviz_mapping.launch" />
+</launch>
