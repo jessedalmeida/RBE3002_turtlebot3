@@ -17,7 +17,7 @@ class A_Star:
         rospy.init_node("a_star", log_level=rospy.DEBUG)  # start node
 
         #Setup Map Publishers
-        self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", map_helper.GridCells, queue_size=1)
+        self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", map_helper.GridCells, queue_size=10)
 
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
@@ -118,7 +118,7 @@ class A_Star:
         pass
 
     def paint_grid_cells(self):
-        while self.map is None:
+        while self.map is None and not rospy.is_shutdown():
             pass
         rospy.logdebug("Publishing grid cells")
         obstacles = [(i, i) for i in range(10)]
@@ -130,6 +130,9 @@ class A_Star:
 if __name__ == '__main__':
     astar = A_Star()
     rospy.loginfo("Initializing A_Star")
-    astar.paint_grid_cells()
+    rate = rospy.Rate(10)
+    while not rospy.is_shutdown():
+        astar.paint_grid_cells()
+        rate.sleep()
     rospy.spin()
     pass
