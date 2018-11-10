@@ -1,3 +1,23 @@
 <launch>
-	<node type="rviz" name="rviz" pkg="rviz" args="-d $(find rbe3002)/config/default.rviz" />
+  <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
+
+  <include file="$(find turtlebot3_bringup)/launch/includes/description.launch.xml">
+    <arg name="model" value="$(arg model)" />
+  </include>
+
+  <node pkg="joint_state_publisher" type="joint_state_publisher" name="joint_state_publisher">
+    <param name="use_gui" value="true"/>
+    <param name="rate" value="50"/>
+  </node>
+
+  <node pkg="robot_state_publisher" type="robot_state_publisher" name="robot_state_publisher">
+    <param name="publish_frequency" type="double" value="50.0" />
+  </node>
+
+  <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 1 odom map 1000"/>
+
+  <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002)/config/default.rviz"/>
+
+  <node name="map_server" pkg="map_server" type="map_server" args="$(find rbe3002)/maps/simple_map.yaml" />
+
 </launch>
