@@ -14,10 +14,13 @@ class A_Star:
             to show the frontier,closed and path.
         """
         # Initialize node
-        rospy.init_node("a_star")  # start node
+        rospy.init_node("a_star", log_level=rospy.DEBUG)  # start node
 
         # Setup map subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
+
+        # Set map to none
+        self.map = None
         rospy.logdebug("Initializing A_Star")
 
 
