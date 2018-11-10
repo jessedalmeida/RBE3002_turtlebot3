@@ -92,19 +92,29 @@ def to_cells(points, my_map):
     """
 
 
-def to_poses(index2ds, my_map):
+def to_grid_cells(index2ds, my_map):
     """
         Creates a GridCell() for Rviz distplay
         :param index2ds: list of tuples
         :return: GridCell()
     """
 
-    gridCells = GridCells()
+    grid = GridCells()
+    grid.header.frame_id = "/odom"
+    grid.cell_height = 1#my_map.info.resolution
+    grid.cell_width = 1#my_map.info.resolution
 
-    gridCells.cell_height = my_map.info.resolution
-    gridCells.cell_width = my_map.info.resolution
+    grid.cells = []
+    i = 1
+    # Fill in points
+    for index2d in index2ds:
+        point = Point()
+        point.x, point.y = (i, i)#index2d_to_point(index2d, my_map)
+        print(point)
+        grid.cells.append(point)
+        i += 1
 
-    return gridCells
+    return grid
 
 def index2d_to_index1d(index2d, my_map):
     return index2d[1] * my_map.info.width + index2d[0]
