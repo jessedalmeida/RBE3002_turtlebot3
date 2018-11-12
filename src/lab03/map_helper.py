@@ -64,7 +64,21 @@ def is_valid_index2d(index2d, my_map):
 
 def convert_location(loc, my_map):
     """converts points to the grid"""
-   
+    #take in a real world xy location, give back a 2d index
+
+    x_point = point[0]
+    y_point = point[1]
+
+    x_index_offset = my_map.info.origin.position.x  # Get the x position of the map origin
+    y_index_offset = my_map.info.origin.position.y  # Get the y position of the map origin
+    x_point -= x_index_offset
+    y_point -= y_index_offset
+
+    res = my_map.info.resolution
+    x_index = x_point // res
+    y_index = y_point // res
+
+    return (x_index, y_index)
 
 def world_to_map(x, y, my_map):
     """
@@ -73,6 +87,10 @@ def world_to_map(x, y, my_map):
         :param y: float of y position
         :return: tuple of converted point
     """
+    # convert from the world frame to the map frame
+    # to find the conversion factor, open the map in RVIZ and select points on the map, getting world coordinates.
+    # Visually inspect these coordinates. Map coordinate system probably start in one of its corners,
+    # world coordinate system probably at center of map
 
 
 def map_to_world(x, y, my_map):
@@ -82,6 +100,8 @@ def map_to_world(x, y, my_map):
         :param y: float of y position
         :return: tuple of converted point
     """
+    # convert from map frame to world frame
+    # use technique from world_to_map()
 
 
 def to_cells(points, my_map):
@@ -131,19 +151,3 @@ def index2d_to_point(index2d, my_map):
     y_point = y_index * res
 
     return (x_point, y_point)
-
-def point_to_index2d(point, my_map):
-    """convert a point to a 2d index"""
-    x_point = point[0]
-    y_point = point[1]
-
-    x_index_offset = my_map.info.origin.position.x  # Get the x position of the map origin
-    y_index_offset = my_map.info.origin.position.y  # Get the y position of the map origin
-    x_point -= x_index_offset
-    y_point -= y_index_offset
-
-    res = my_map.info.resolution
-    x_index = x_point // res
-    y_index = y_point // res
-
-    return (x_index, y_index)
