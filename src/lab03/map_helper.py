@@ -66,8 +66,8 @@ def convert_location(loc, my_map):
     """converts points to the grid"""
     #take in a real world xy location, give back a 2d index
 
-    x_point = point[0]
-    y_point = point[1]
+    x_point = loc[0]
+    y_point = loc[1]
 
     x_index_offset = my_map.info.origin.position.x  # Get the x position of the map origin
     y_index_offset = my_map.info.origin.position.y  # Get the y position of the map origin
