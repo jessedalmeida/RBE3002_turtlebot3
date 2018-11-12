@@ -1,7 +1,9 @@
 #!/usr/bin/env python
 import rospy
-from nav_msgs.msg import OccupancyGrid
+from nav_msgs.msg import OccupancyGrid, Odometry
+from geometry_msgs.msg import PointStamped, Pose
 import map_helper
+import PriorityQueue
 
 
 class A_Star:
@@ -21,10 +23,15 @@ class A_Star:
 
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
+        rospy.Subscriber("/clicked_point", PointStamped, self.astar_goal_client)
 
         # Set map to none
         self.map = None
         rospy.logdebug("Initializing A_Star")
+
+
+        self.goal = PointStamped()
+        self.pose = Pose()
 
         self.rate = rospy.Rate(.5)
 
@@ -50,6 +57,17 @@ class A_Star:
 
         self.map = new_map
         rospy.logdebug("Resolution is: %s" % new_map.info.resolution)
+        x_index_offset = self.map.info.origin.position.x
+        y_index_offset = self.map.info.origin.position.y
+        rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
+
+    def astar_goal_client(self, point):
+        """
+        Subscriber client to get the published goal point
+        :param point: goal
+        """
+        rospy.logdebug("New goal: %s %s" % (point.point.x, point.point.y))
+        self.goal = point
 
     def a_star(self, start, goal):
         """
@@ -59,7 +77,28 @@ class A_Star:
             :param goal: tuple of goal pose
             :return: dict of tuples
         """
-        pass
+        # frontier = PriorityQueue()
+        # frontier.put(start, 0)
+        # came_from = {}
+        # cost_so_far = {}
+        # came_from[start] = None
+        # cost_so_far[start] = 0
+        #
+        # while not frontier.empty():
+        #     current = frontier.get()
+        #
+        #     if current == goal:
+        #         break
+        #
+        #     # for next in graph.neighbors(current):
+        #     for next in map_helper.get_neighbors(current, self.map):
+        #         new_cost = cost_so_far[current] + self.move_cost(current, next)
+        #         if next not in cost_so_far or new_cost < cost_so_far[next]:
+        #             cost_so_far[next] = new_cost
+        #             priority = new_cost
+        #             frontier.put(next, priority)
+        #             came_from[next] = current
+
 
     def euclidean_heuristic(self, point1, point2):
         """
@@ -78,7 +117,7 @@ class A_Star:
               :param next: tuple of location
               :return: dist between two points
         """
-        pass
+        return 0
 
     def reconstruct_path(self, start, goal, came_from):
         """
@@ -121,18 +160,24 @@ class A_Star:
         """publishes grid cells with the given coordinates"""
         while self.map is None and not rospy.is_shutdown():
             pass
-        rospy.logdebug("Publishing grid cells")
+        # rospy.logdebug("Publishing grid cells")
+
         # obstacles = [(i, i) for i in range(10)]
-        obstacles = [(0,0)]
+        if self.goal:
+            obstacles = [(self.goal.point.x, self.goal.point.y)]
+        else:
+            obstacles = [(0,0)]
+
+
         cells = map_helper.to_grid_cells(obstacles, self.map)
-        rospy.logdebug(cells)
+        # rospy.logdebug(cells.cells)
         self.obstacles_pub.publish(cells)
 
 
 if __name__ == '__main__':
     astar = A_Star()
     rospy.loginfo("Initializing A_Star")
-    rate = rospy.Rate(10)
+    rate = rospy.Rate(1)
     while not rospy.is_shutdown():
         astar.paint_grid_cells()
         rate.sleep()

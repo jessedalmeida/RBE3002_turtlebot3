@@ -114,7 +114,9 @@ def to_grid_cells(cells_to_paint, my_map):
     # Fill in points
     for index2d in cells_to_paint:
         point = Point()
-        point.x, point.y = index2d_to_point(index2d, my_map)
+        # point.x, point.y = index2d_to_point(index2d, my_map)
+        point.x = index2d[0]
+        point.y = index2d[1]
         grid.cells.append(point)
 
     return grid
@@ -138,6 +140,7 @@ def index2d_to_point(index2d, my_map):
     x_point = x_index * res
     y_point = y_index * res
 
+    rospy.logdebug("Map point: x %s y %s" % (x_point, y_point))
     return x_point, y_point
 
 
