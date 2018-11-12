@@ -87,6 +87,7 @@ def world_to_map(x, y, my_map):
         converts a point from the world to the map
         :param x: float of x position
         :param y: float of y position
+        :param my_map: 1d map array
         :return: tuple of converted point
     """
     # convert from the world frame to the map frame
@@ -100,6 +101,7 @@ def map_to_world(x, y, my_map):
         converts a point from the map to the world
         :param x: float of x position
         :param y: float of y position
+        :param my_map: 1d map array
         :return: tuple of converted point
     """
     # convert from map frame to world frame
@@ -115,10 +117,11 @@ def to_cells(points, my_map):
     """
 
 
-def to_grid_cells(index2ds, my_map):
+def to_grid_cells(cells_to_paint, my_map):
     """
         Creates a GridCell() for Rviz distplay
-        :param index2ds: list of tuples
+        :param cells_to_paint: list of tuples
+        :param my_map: 1d map array
         :return: GridCell()
     """
 
@@ -129,15 +132,19 @@ def to_grid_cells(index2ds, my_map):
 
     grid.cells = []
     # Fill in points
-    for index2d in index2ds:
+    for index2d in cells_to_paint:
         point = Point()
-        point.x, point.y = index2d_to_point(index2d, my_map)
+        # point.x, point.y = index2d_to_point(index2d, my_map)
+        point.x = index2d[0]
+        point.y = index2d[1]
         grid.cells.append(point)
 
     return grid
 
+
 def index2d_to_index1d(index2d, my_map):
     return index2d[1] * my_map.info.width + index2d[0]
+
 
 def index2d_to_point(index2d, my_map):
     """convert a 2d index to a point"""
