@@ -118,10 +118,12 @@ class A_Star:
         pass
 
     def paint_grid_cells(self):
+        """publishes grid cells with the given coordinates"""
         while self.map is None and not rospy.is_shutdown():
             pass
         rospy.logdebug("Publishing grid cells")
-        obstacles = [(i, i) for i in range(10)]
+        # obstacles = [(i, i) for i in range(10)]
+        obstacles = [(0,0)]
         cells = map_helper.to_grid_cells(obstacles, self.map)
         rospy.logdebug(cells)
         self.obstacles_pub.publish(cells)

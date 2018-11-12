@@ -16,6 +16,7 @@ def get_neighbors(index2d, my_map):
     """
         returns the legal neighbors of index2d
         :param index2d: tuple of index in 2d grid cells
+        :param my_map: 1d map array
         :return: list of tuples
     """
 
@@ -47,6 +48,7 @@ def is_valid_index2d(index2d, my_map):
     """
         Gets if a point is a legal location
         :param index2d: tuple of location
+        :param my_map: 1d map array
         :return: boolean is a legal point
     """
     x_index = index2d[0]
@@ -71,6 +73,7 @@ def world_to_map(x, y, my_map):
         converts a point from the world to the map
         :param x: float of x position
         :param y: float of y position
+        :param my_map: 1d map array
         :return: tuple of converted point
     """
 
@@ -80,6 +83,7 @@ def map_to_world(x, y, my_map):
         converts a point from the map to the world
         :param x: float of x position
         :param y: float of y position
+        :param my_map: 1d map array
         :return: tuple of converted point
     """
 
@@ -88,14 +92,16 @@ def to_cells(points, my_map):
     """
         Creates a GridCell() for Rviz display
         :param points: list of tuples
+        :param my_map: 1d map array
         :return: GridCell()
     """
 
 
-def to_grid_cells(index2ds, my_map):
+def to_grid_cells(cells_to_paint, my_map):
     """
         Creates a GridCell() for Rviz distplay
-        :param index2ds: list of tuples
+        :param cells_to_paint: list of tuples
+        :param my_map: 1d map array
         :return: GridCell()
     """
 
@@ -106,15 +112,17 @@ def to_grid_cells(index2ds, my_map):
 
     grid.cells = []
     # Fill in points
-    for index2d in index2ds:
+    for index2d in cells_to_paint:
         point = Point()
         point.x, point.y = index2d_to_point(index2d, my_map)
         grid.cells.append(point)
 
     return grid
 
+
 def index2d_to_index1d(index2d, my_map):
     return index2d[1] * my_map.info.width + index2d[0]
+
 
 def index2d_to_point(index2d, my_map):
     """convert a 2d index to a point"""
@@ -130,7 +138,8 @@ def index2d_to_point(index2d, my_map):
     x_point = x_index * res
     y_point = y_index * res
 
-    return (x_point, y_point)
+    return x_point, y_point
+
 
 def point_to_index2d(point, my_map):
     """convert a point to a 2d index"""
