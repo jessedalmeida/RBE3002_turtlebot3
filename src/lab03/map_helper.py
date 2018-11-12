@@ -16,6 +16,7 @@ def get_neighbors(index2d, my_map):
     """
         returns the legal neighbors of index2d
         :param index2d: tuple of index in 2d grid cells
+        :param my_map: 1d map array
         :return: list of tuples
     """
 
@@ -47,6 +48,7 @@ def is_valid_index2d(index2d, my_map):
     """
         Gets if a point is a legal location
         :param index2d: tuple of location
+        :param my_map: 1d map array
         :return: boolean is a legal point
     """
     x_index = index2d[0]
@@ -108,6 +110,7 @@ def to_cells(points, my_map):
     """
         Creates a GridCell() for Rviz display
         :param points: list of tuples
+        :param my_map: 1d map array
         :return: GridCell()
     """
 
