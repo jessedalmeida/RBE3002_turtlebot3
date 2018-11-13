@@ -23,3 +23,11 @@ class PriorityQueue:
             l.append(heapq.heappop(queue)[1])
 
         return l
+
+    def __str__(self):
+        l = []
+        elements_copy = copy.deepcopy(self.elements)
+        for ele in range(len(elements_copy)):
+            l.append(heapq.heappop(elements_copy))
+        return str(l)
+
