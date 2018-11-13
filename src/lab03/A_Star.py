@@ -217,6 +217,11 @@ class A_Star:
         """
         pass
 
+    def draw_circle(self):
+        obstacles = [(math.cos(i/3.0), math.sin(i/3.0)) for i in range(0, 20)]
+        rospy.logdebug(obstacles)
+        cells = map_helper.to_grid_cells(obstacles, self.map)
+        self.obstacles_pub.publish(cells)
 
     def paint_obstacles(self, obstacles):
         """
@@ -241,8 +246,11 @@ if __name__ == '__main__':
     rospy.loginfo("Initializing A_Star")
 
     rate = rospy.Rate(1)
-    # while not rospy.is_shutdown():
-    #     astar.a_star((0, 0), (2, 3))
-    #     rate.sleep()
+    rate.sleep()
+    astar.draw_circle()
+    while not rospy.is_shutdown():
+        # astar.draw_circle()
+        # astar.a_star((0, 0), (2, 3))
+        rate.sleep()
     rospy.spin()
     pass
