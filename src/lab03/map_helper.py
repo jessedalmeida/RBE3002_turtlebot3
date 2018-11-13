@@ -76,9 +76,6 @@ def convert_location(loc, my_map):
     y_point -= y_index_offset
 
     res = my_map.info.resolution
-    # x_index = int(x_point / res)
-    # y_index = int(y_point / res)
-
     x_index = int(x_point / res)
     y_index = int(y_point / res)
 

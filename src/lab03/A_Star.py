@@ -209,10 +209,9 @@ if __name__ == '__main__':
     astar = A_Star()
     rospy.loginfo("Initializing A_Star")
 
-
     rate = rospy.Rate(1)
     while not rospy.is_shutdown():
-        # astar.a_star((0, 0), (3, 3))
+        astar.a_star((0, 0), (3, 3))
         rate.sleep()
         rospy.spin()
     pass
