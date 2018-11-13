@@ -121,7 +121,7 @@ class A_Star:
             frontier_map.append(map_helper.convert_location(point, self.map))
 
         rospy.logdebug("Frontier: %s " % frontier)
-        self.paint_grid_cells(frontier_map)
+        self.paint_obstacles(frontier_map)
 
 
     def tester(self, point):
