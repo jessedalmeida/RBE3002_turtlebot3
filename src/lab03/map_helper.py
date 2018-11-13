@@ -87,16 +87,15 @@ def index2d_to_world(index2d, my_map):
     y_index = index2d[1]
 
     res = my_map.info.resolution
-    x_index = x_index * res
-    y_index = y_index * res
+    x_point = x_index * res
+    y_point = y_index * res
 
     x_index_offset = my_map.info.origin.position.x
     y_index_offset = my_map.info.origin.position.y
-    x_index += x_index_offset
-    y_index += y_index_offset
+    x_point += x_index_offset
+    y_point += y_index_offset
 
-
-    return (x_index, y_index)
+    return (x_point, y_point)
 
 
 def world_to_map(xy, my_map):

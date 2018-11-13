@@ -78,6 +78,8 @@ class A_Star:
         rospy.logdebug("New goal: %s %s" % (x, y))
 
         painted_cell = map_helper.to_grid_cells([(x,y)], self.map)
+
+        self.a_star((0, 0), (x, y))
         self.point_pub.publish(painted_cell)
 
 
@@ -222,8 +224,8 @@ if __name__ == '__main__':
     rospy.loginfo("Initializing A_Star")
 
     rate = rospy.Rate(1)
-    while not rospy.is_shutdown():
-        astar.a_star((0, 0), (2, 3))
-        rate.sleep()
+    # while not rospy.is_shutdown():
+    #     astar.a_star((0, 0), (2, 3))
+    #     rate.sleep()
     rospy.spin()
     pass
