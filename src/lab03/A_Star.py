@@ -23,6 +23,7 @@ class A_Star:
         self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", GridCells, queue_size=10)
         self.path_pub = rospy.Publisher("local_costmap/path", GridCells, queue_size=10)
         self.point_pub = rospy.Publisher("/point_cell", GridCells, queue_size=10)
+        self.wavefront_pub = rospy.Publisher("local_costmap/wavefront", GridCells, queue_size=10)
 
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
@@ -112,6 +113,7 @@ class A_Star:
             for next in map_helper.get_neighbors(current, self.map):
                 rospy.logdebug("Next node %s" % (next,))
 
+
                 new_cost = cost_so_far[current] + self.move_cost(current, next)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
@@ -121,10 +123,12 @@ class A_Star:
 
         frontier_list = frontier.get_items()
         frontier_map = []
+        frontier_to_display = []
         for point in frontier_list:
             frontier_map.append(map_helper.world_to_index2d(point, self.map))
+            frontier_to_display.append(map_helper.index2d_to_world(point, self.map))
 
-        rospy.logdebug("Frontier: %s " % frontier)
+        rospy.logdebug("Frontier list: %s " % frontier_list)
 
         path = [map_helper.index2d_to_world(goal, self.map)]
         last_node = goal
@@ -137,6 +141,8 @@ class A_Star:
 
         new_path = self.optimize_path(path)
         rospy.logdebug("Path %s " % new_path)
+
+        self.paint_wavefront(frontier_to_display)
 
         self.paint_obstacles(new_path)
         self.paint_cells(frontier_list, new_path)
@@ -240,6 +246,14 @@ class A_Star:
 
         cells = map_helper.to_grid_cells(obstacles, self.map)
         self.obstacles_pub.publish(cells)
+
+    def paint_wavefront(self, wavefront):
+        """
+        :param wavefront: list of tuples indicating current wavefront
+        :return:
+        """
+        cells = map_helper.to_grid_cells(wavefront, self.map)
+        self.wavefront_pub.publish(cells)
 
 
 if __name__ == '__main__':

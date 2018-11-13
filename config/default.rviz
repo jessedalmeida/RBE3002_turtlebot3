@@ -7,6 +7,7 @@ Panels:
         - /Global Options1
         - /GridCells1
         - /GridCells2
+        - /GridCells3
       Splitter Ratio: 0.602941155
     Tree Height: 747
   - Class: rviz/Selection
@@ -193,6 +194,13 @@ Visualization Manager:
       Name: GridCells
       Topic: /point_cell
       Value: true
+    - Alpha: 1
+      Class: rviz/GridCells
+      Color: 0; 0; 255
+      Enabled: true
+      Name: GridCells
+      Topic: /local_costmap/wavefront
+      Value: true
   Enabled: true
   Global Options:
     Background Color: 108; 108; 108
@@ -218,15 +226,15 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 16.2784729
+      Distance: 21.3483734
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: -0.0201000422
-        Y: -0.467065692
+        X: 1.89228272
+        Y: -1.93403602
         Z: -4.76837158e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
