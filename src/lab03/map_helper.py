@@ -20,26 +20,26 @@ def get_neighbors(index2d, my_map):
         :return: list of tuples
     """
 
-    list_of_neighbors = ()
+    list_of_neighbors = []
 
     x_index = index2d[0]
     y_index = index2d[1]
 
     if(is_valid_index2d((x_index, y_index - 1), my_map)):
         neighbor_n = (x_index, y_index - 1)
-        list_of_neighbors += neighbor_n
+        list_of_neighbors.append(neighbor_n)
 
     if(is_valid_index2d((x_index + 1, y_index), my_map)):
         neighbor_e = (x_index + 1, y_index)
-        list_of_neighbors += neighbor_e
+        list_of_neighbors.append(neighbor_e)
 
     if(is_valid_index2d((x_index, y_index + 1), my_map)):
         neighbor_s = (x_index, y_index + 1)
-        list_of_neighbors += neighbor_s
+        list_of_neighbors.append(neighbor_s)
 
     if(is_valid_index2d((x_index - 1, y_index), my_map)):
         neighbor_w = (x_index - 1, y_index)
-        list_of_neighbors += neighbor_w
+        list_of_neighbors.append(neighbor_w)
 
     return list_of_neighbors
 
@@ -67,7 +67,6 @@ def is_valid_index2d(index2d, my_map):
 def convert_location(loc, my_map):
     """converts points to the grid"""
     #take in a real world xy location, give back a 2d index
-
     x_point = loc[0]
     y_point = loc[1]
 
@@ -77,8 +76,11 @@ def convert_location(loc, my_map):
     y_point -= y_index_offset
 
     res = my_map.info.resolution
-    x_index = x_point // res
-    y_index = y_point // res
+    # x_index = int(x_point / res)
+    # y_index = int(y_point / res)
+
+    x_index = int(x_point / res)
+    y_index = int(y_point / res)
 
     return (x_index, y_index)
 
@@ -135,8 +137,8 @@ def to_grid_cells(cells_to_paint, my_map):
     for index2d in cells_to_paint:
         point = Point()
         # point.x, point.y = index2d_to_point(index2d, my_map)
-        point.x = index2d[0]
-        point.y = index2d[1]
+        point.x = index2d[0] + .5
+        point.y = index2d[1] + .5
         grid.cells.append(point)
 
     return grid
@@ -153,11 +155,12 @@ def index2d_to_point(index2d, my_map):
 
     x_index_offset = my_map.info.origin.position.x
     y_index_offset = my_map.info.origin.position.y
-    x_index -= x_index_offset
-    y_index -= y_index_offset
+    x_index += x_index_offset
+    y_index += y_index_offset
 
     res = my_map.info.resolution
     x_point = x_index * res
     y_point = y_index * res
 
     return (x_point, y_point)
+

@@ -14,3 +14,11 @@ class PriorityQueue:
 
     def get(self):
         return heapq.heappop(self.elements)[1]
+
+    def get_items(self):
+        l = []
+        copy = self.elements
+        for ele in len(copy):
+            l.append(heapq.heappop(copy)[1])
+
+        return l
