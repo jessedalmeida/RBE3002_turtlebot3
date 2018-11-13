@@ -4,6 +4,7 @@ from nav_msgs.msg import OccupancyGrid, GridCells
 from geometry_msgs.msg import PointStamped, Pose
 import map_helper
 from PriorityQueue import PriorityQueue
+import math
 
 
 class A_Star:
@@ -135,6 +136,8 @@ class A_Star:
             :param point2: tuple of location
             :return: dist between two points
         """
+        #Pythagorian theorem
+        return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
 
     pass
 
@@ -145,7 +148,7 @@ class A_Star:
               :param next: tuple of location
               :return: dist between two points
         """
-        return 0
+        return abs(current[0] - next[0]) + abs(current[1] - next[1])
 
     def reconstruct_path(self, start, goal, came_from):
         """
