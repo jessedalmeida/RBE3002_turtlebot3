@@ -64,7 +64,7 @@ def is_valid_index2d(index2d, my_map):
         return False
 
 
-def convert_location(loc, my_map):
+def world_to_index2d(loc, my_map):
     """converts points to the grid"""
     #take in a real world xy location, give back a 2d index
     x_point = loc[0]
@@ -84,33 +84,31 @@ def convert_location(loc, my_map):
 
     return (x_index, y_index)
 
-def world_to_map(x, y, my_map):
+def world_to_map(xy, my_map):
     """
         converts a point from the world to the map
-        :param x: float of x position
-        :param y: float of y position
+        :param xy: touple of xy float position
         :param my_map: 1d map array
         :return: tuple of converted point
     """
     x_offset = my_map.info.origin.position.x
     y_offset = my_map.info.origin.position.y
-    new_x = x + x_offset
-    new_y = y + y_offset
+    new_x = xy[0] + x_offset
+    new_y = xy[1] + y_offset
     return (new_x, new_y)
 
 
-def map_to_world(x, y, my_map):
+def map_to_world(xy, my_map):
     """
         converts a point from the map to the world
-        :param x: float of x position
-        :param y: float of y position
+        :param xy: touple of xy float position
         :param my_map: 1d map array
         :return: tuple of converted point
     """
     x_offset = my_map.info.origin.position.x
     y_offset = my_map.info.origin.position.y
-    new_x = x - x_offset
-    new_y = y - y_offset
+    new_x = xy[0] + x_offset
+    new_y = xy[1] + y_offset
     return (new_x, new_y)
 
 
@@ -152,7 +150,7 @@ def index2d_to_index1d(index2d, my_map):
     return index2d[1] * my_map.info.width + index2d[0]
 
 
-def index2d_to_point(index2d, my_map):
+def index2d_to_world(index2d, my_map):
     """convert a 2d index to a point"""
     x_index = index2d[0]
     y_index = index2d[1]
