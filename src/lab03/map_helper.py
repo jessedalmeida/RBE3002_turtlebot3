@@ -132,7 +132,7 @@ def to_grid_cells(cells_to_paint, my_map):
     """
 
     grid = GridCells()
-    grid.header.frame_id = "/odom"
+    grid.header.frame_id = "/map"
     grid.cell_height = my_map.info.resolution
     grid.cell_width = my_map.info.resolution
 
