@@ -133,9 +133,10 @@ class A_Star:
             path.insert(0, map_helper.index2d_to_world(next_node, self.map))
             last_node = next_node
 
-        rospy.logdebug("Path %s " % path)
+        #rospy.logdebug("Path %s " % path)
 
         new_path = self.optimize_path(path)
+        rospy.logdebug("Path %s " % new_path)
 
         self.paint_obstacles(new_path)
         self.paint_cells(frontier_list, new_path)
@@ -187,7 +188,7 @@ class A_Star:
         for idx in range(len(path)):
             if(idx == 0 or idx == len(path)-1):
                 pathOptimized.append(path[idx])
-            elif(~self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
+            elif(not self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
                 pathOptimized.append(path[idx])
 
         return pathOptimized
