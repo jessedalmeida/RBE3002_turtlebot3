@@ -92,10 +92,11 @@ def world_to_map(x, y, my_map):
         :param my_map: 1d map array
         :return: tuple of converted point
     """
-    # convert from the world frame to the map frame
-    # to find the conversion factor, open the map in RVIZ and select points on the map, getting world coordinates.
-    # Visually inspect these coordinates. Map coordinate system probably start in one of its corners,
-    # world coordinate system probably at center of map
+    x_offset = my_map.info.origin.position.x
+    y_offset = my_map.info.origin.position.y
+    new_x = x + x_offset
+    new_y = y + y_offset
+    return (new_x, new_y)
 
 
 def map_to_world(x, y, my_map):
@@ -106,8 +107,11 @@ def map_to_world(x, y, my_map):
         :param my_map: 1d map array
         :return: tuple of converted point
     """
-    # convert from map frame to world frame
-    # use technique from world_to_map()
+    x_offset = my_map.info.origin.position.x
+    y_offset = my_map.info.origin.position.y
+    new_x = x - x_offset
+    new_y = y - y_offset
+    return (new_x, new_y)
 
 
 def to_cells(points, my_map):
