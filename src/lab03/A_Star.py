@@ -21,6 +21,7 @@ class A_Star:
 
         #Setup Map Publishers
         self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", GridCells, queue_size=10)
+        self.path_pub = rospy.Publisher("local_costmap/path", GridCells, queue_size=10)
         self.point_pub = rospy.Publisher("/point_cell", GridCells, queue_size=10)
 
         # Setup Map Subscriber
@@ -112,7 +113,7 @@ class A_Star:
                 new_cost = cost_so_far[current] + self.move_cost(current, next)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
-                    priority = new_cost
+                    priority = new_cost + self.euclidean_heuristic(goal, next)
                     frontier.put(next, priority)
                     came_from[next] = current
 
@@ -122,7 +123,18 @@ class A_Star:
             frontier_map.append(map_helper.world_to_index2d(point, self.map))
 
         rospy.logdebug("Frontier: %s " % frontier)
-        self.paint_obstacles(frontier_map)
+
+        path = [map_helper.index2d_to_world(goal, self.map)]
+        last_node = goal
+        while came_from[last_node] is not None:
+            next_node = came_from[last_node]
+            path.insert(0, map_helper.index2d_to_world(next_node, self.map))
+            last_node = next_node
+
+        rospy.logdebug("Path %s " % path)
+
+        self.paint_obstacles(path)
+        self.paint_cells(frontier_list, path)
 
 
     def tester(self, point):
@@ -138,7 +150,6 @@ class A_Star:
         """
         #Pythagorian theorem
         return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
-
     pass
 
     def move_cost(self, current, next):
@@ -195,6 +206,7 @@ class A_Star:
         :return:
         """
 
+        rospy.logdebug("Painting Path")
         # obstacles = [(i, i) for i in range(10)]
         # if self.goal:
         #     obstacles = [(self.goal.point.x, self.goal.point.y)]
@@ -211,7 +223,7 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(1)
     while not rospy.is_shutdown():
-        astar.a_star((0, 0), (3, 3))
+        astar.a_star((0, 0), (2, 3))
         rate.sleep()
-        rospy.spin()
+    rospy.spin()
     pass

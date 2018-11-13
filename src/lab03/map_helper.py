@@ -81,6 +81,24 @@ def world_to_index2d(loc, my_map):
 
     return (x_index, y_index)
 
+def index2d_to_world(index2d, my_map):
+    """convert a 2d index to a point"""
+    x_index = index2d[0]
+    y_index = index2d[1]
+
+    res = my_map.info.resolution
+    x_index = x_index * res
+    y_index = y_index * res
+
+    x_index_offset = my_map.info.origin.position.x
+    y_index_offset = my_map.info.origin.position.y
+    x_index += x_index_offset
+    y_index += y_index_offset
+
+
+    return (x_index, y_index)
+
+
 def world_to_map(xy, my_map):
     """
         converts a point from the world to the map
@@ -127,7 +145,7 @@ def to_grid_cells(cells_to_paint, my_map):
     """
 
     grid = GridCells()
-    grid.header.frame_id = "/map"
+    grid.header.frame_id = "/odom"
     grid.cell_height = my_map.info.resolution
     grid.cell_width = my_map.info.resolution
 
@@ -146,20 +164,4 @@ def to_grid_cells(cells_to_paint, my_map):
 def index2d_to_index1d(index2d, my_map):
     return index2d[1] * my_map.info.width + index2d[0]
 
-
-def index2d_to_world(index2d, my_map):
-    """convert a 2d index to a point"""
-    x_index = index2d[0]
-    y_index = index2d[1]
-
-    x_index_offset = my_map.info.origin.position.x
-    y_index_offset = my_map.info.origin.position.y
-    x_index += x_index_offset
-    y_index += y_index_offset
-
-    res = my_map.info.resolution
-    x_point = x_index * res
-    y_point = y_index * res
-
-    return (x_point, y_point)
 
