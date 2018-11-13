@@ -103,14 +103,14 @@ class A_Star:
 
         while not frontier.empty():
             current = frontier.get()
-            rospy.logdebug("Current Node %s " % (current, ))
+            # rospy.logdebug("Current Node %s " % (current, ))
 
             if current == goal:
                 break
 
             # for next in graph.neighbors(current):
             for next in map_helper.get_neighbors(current, self.map):
-                rospy.logdebug("Next node %s" % (next,))
+                # rospy.logdebug("Next node %s" % (next,))
 
                 new_cost = cost_so_far[current] + self.move_cost(current, next)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
@@ -124,7 +124,7 @@ class A_Star:
         for point in frontier_list:
             frontier_map.append(map_helper.world_to_index2d(point, self.map))
 
-        rospy.logdebug("Frontier: %s " % frontier)
+        # rospy.logdebug("Frontier: %s " % frontier)
 
         path = [map_helper.index2d_to_world(goal, self.map)]
         last_node = goal
@@ -136,6 +136,8 @@ class A_Star:
         rospy.logdebug("Path %s " % path)
 
         new_path = self.optimize_path(path)
+
+        # rospy.logdebug("New Path %s " % new_path)
 
         self.paint_obstacles(new_path)
         self.paint_cells(frontier_list, new_path)
@@ -187,7 +189,7 @@ class A_Star:
         for idx in range(len(path)):
             if(idx == 0 or idx == len(path)-1):
                 pathOptimized.append(path[idx])
-            elif(~self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
+            elif(not self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
                 pathOptimized.append(path[idx])
 
         return pathOptimized
@@ -242,7 +244,7 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(1)
     # while not rospy.is_shutdown():
-    #     astar.a_star((0, 0), (2, 3))
+    #     # astar.a_star((0, 0), (2, 3))
     #     rate.sleep()
     rospy.spin()
     pass
