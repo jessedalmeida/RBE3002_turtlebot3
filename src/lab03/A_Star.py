@@ -108,7 +108,15 @@ class A_Star:
                     frontier.put(next, priority)
                     came_from[next] = current
         # TODO get frontier to list
-        rospy.logdebug(frontier)
+
+        frontier_list = frontier.get_items()
+        frontier_map = []
+        for point in frontier_list:
+            frontier_map.append(map_helper.index2d_to_point(point, self.map))
+
+        rospy.logdebug(frontier_map)
+        self.paint_grid_cells(frontier_list)
+
 
     def tester(self, point):
         a = map_helper.convert_location(point, self.map)
@@ -175,11 +183,11 @@ class A_Star:
         while self.map is None and not rospy.is_shutdown():
             pass
 
-        # obstacles = [(i, i) for i in range(10)]
+        obstacles = [(i, i) for i in range(10)]
         if self.goal:
             obstacles = [(self.goal.point.x, self.goal.point.y)]
         else:
-            obstacles = [(0,0)]
+            obstacles = [(3,3)]
 
 
         cells = map_helper.to_grid_cells(obstacles, self.map)
@@ -193,9 +201,9 @@ if __name__ == '__main__':
 
 
     rate = rospy.Rate(1)
-    # while not rospy.is_shutdown():
-        # astar.paint_grid_cells()
-    astar.a_star((0, 0), (3, 3))
-        # rate.sleep()
-    # rospy.spin()
+    while not rospy.is_shutdown():
+        astar.paint_grid_cells()
+    # astar.a_star((0, 0), (3, 3))
+        rate.sleep()
+    rospy.spin()
     pass

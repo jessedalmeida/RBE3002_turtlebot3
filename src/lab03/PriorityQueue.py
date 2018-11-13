@@ -1,5 +1,5 @@
 import heapq
-
+import copy
 
 class PriorityQueue:
     def __init__(self):
@@ -17,8 +17,9 @@ class PriorityQueue:
 
     def get_items(self):
         l = []
-        copy = self.elements
-        for ele in len(copy):
-            l.append(heapq.heappop(copy)[1])
+
+        queue = copy.deepcopy(self.elements)
+        for ele in range(len(queue)):
+            l.append(heapq.heappop(queue)[1])
 
         return l

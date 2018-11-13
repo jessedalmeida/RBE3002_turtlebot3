@@ -137,8 +137,8 @@ def to_grid_cells(cells_to_paint, my_map):
     for index2d in cells_to_paint:
         point = Point()
         # point.x, point.y = index2d_to_point(index2d, my_map)
-        point.x = index2d[0] + .5
-        point.y = index2d[1] + .5
+        point.x = index2d[0]
+        point.y = index2d[1]
         grid.cells.append(point)
 
     return grid
