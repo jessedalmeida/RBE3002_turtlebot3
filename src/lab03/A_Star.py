@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 import rospy
-from nav_msgs.msg import OccupancyGrid, Odometry
+from nav_msgs.msg import OccupancyGrid, GridCells
 from geometry_msgs.msg import PointStamped, Pose
 import map_helper
 from PriorityQueue import PriorityQueue
@@ -20,11 +20,12 @@ class A_Star:
         rospy.init_node("a_star", log_level=rospy.DEBUG)  # start node
 
         #Setup Map Publishers
-        self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", map_helper.GridCells, queue_size=10)
+        self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", GridCells, queue_size=10)
+        self.point_pub = rospy.Publisher("/point_cell", GridCells, queue_size=10)
 
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
-        rospy.Subscriber("/clicked_point", PointStamped, self.astar_goal_client)
+        rospy.Subscriber("/clicked_point", PointStamped, self.paint_point)
 
         # Set map to none
         self.map = None
@@ -65,13 +66,19 @@ class A_Star:
         y_index_offset = self.map.info.origin.position.y
         rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
 
-    def astar_goal_client(self, point):
+    def paint_point(self, point):
         """
-        Subscriber client to get the published goal point
-        :param point: goal
+        Subscriber client to get the published goal point and paint it in rviz
+        :param point: goal point
         """
-        rospy.logdebug("New goal: %s %s" % (point.point.x, point.point.y))
         self.goal = point
+        x = point.point.x
+        y = point.point.y
+        rospy.logdebug("New goal: %s %s" % (x, y))
+
+        painted_cell = map_helper.to_grid_cells([(x,y)], self.map)
+        self.point_pub.publish(painted_cell)
+
 
     def a_star(self, start, goal):
         """
@@ -112,10 +119,10 @@ class A_Star:
         frontier_list = frontier.get_items()
         frontier_map = []
         for point in frontier_list:
-            frontier_map.append(map_helper.index2d_to_point(point, self.map))
+            frontier_map.append(map_helper.convert_location(point, self.map))
 
-        rospy.logdebug(frontier_map)
-        self.paint_grid_cells(frontier_list)
+        rospy.logdebug("Frontier: %s " % frontier)
+        self.paint_grid_cells(frontier_map)
 
 
     def tester(self, point):
@@ -180,20 +187,21 @@ class A_Star:
         """
         pass
 
-    def paint_grid_cells(self):
-        """publishes grid cells with the given coordinates"""
-        while self.map is None and not rospy.is_shutdown():
-            pass
 
-        obstacles = [(i, i) for i in range(10)]
-        if self.goal:
-            obstacles = [(self.goal.point.x, self.goal.point.y)]
-        else:
-            obstacles = [(3, 3)]
+    def paint_obstacles(self, obstacles):
+        """
+        Paints the grids cells in the list to obstacles publisher
+        :param obstacles: list of tuples
+        :return:
+        """
 
+        # obstacles = [(i, i) for i in range(10)]
+        # if self.goal:
+        #     obstacles = [(self.goal.point.x, self.goal.point.y)]
+        # else:
+        #     obstacles = [(3,3)]
 
         cells = map_helper.to_grid_cells(obstacles, self.map)
-        # rospy.logdebug(cells.cells)
         self.obstacles_pub.publish(cells)
 
 
@@ -204,8 +212,7 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(1)
     while not rospy.is_shutdown():
-        astar.paint_grid_cells()
-    # astar.a_star((0, 0), (3, 3))
+        # astar.a_star((0, 0), (3, 3))
         rate.sleep()
-    rospy.spin()
+        rospy.spin()
     pass
