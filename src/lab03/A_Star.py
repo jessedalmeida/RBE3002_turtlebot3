@@ -88,8 +88,8 @@ class A_Star:
             :param goal: tuple of goal pose
             :return: dict of tuples
         """
-        start = map_helper.convert_location(start, self.map)
-        goal = map_helper.convert_location(goal, self.map)
+        start = map_helper.world_to_index2d(start, self.map)
+        goal = map_helper.world_to_index2d(goal, self.map)
 
         frontier = PriorityQueue()
         frontier.put(start, 0)
@@ -119,14 +119,14 @@ class A_Star:
         frontier_list = frontier.get_items()
         frontier_map = []
         for point in frontier_list:
-            frontier_map.append(map_helper.convert_location(point, self.map))
+            frontier_map.append(map_helper.world_to_index2d(point, self.map))
 
         rospy.logdebug("Frontier: %s " % frontier)
-        self.paint_grid_cells(frontier_map)
+        self.paint_obstacles(frontier_map)
 
 
     def tester(self, point):
-        a = map_helper.convert_location(point, self.map)
+        a = map_helper.world_to_index2d(point, self.map)
         rospy.logdebug("Neighbors of %s are %s " % (point, a))
 
     def euclidean_heuristic(self, point1, point2):
