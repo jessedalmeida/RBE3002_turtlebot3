@@ -135,8 +135,10 @@ class A_Star:
 
         rospy.logdebug("Path %s " % path)
 
-        self.paint_obstacles(path)
-        self.paint_cells(frontier_list, path)
+        new_path = self.optimize_path(path)
+
+        self.paint_obstacles(new_path)
+        self.paint_cells(frontier_list, new_path)
 
 
     def tester(self, point):
@@ -180,7 +182,22 @@ class A_Star:
             :param path: list of tuples
             :return: reduced list of tuples
         """
-        pass
+        pathOptimized = []
+
+        for idx in range(len(path)):
+            if(idx == 0 or idx == len(path)-1):
+                pathOptimized.append(path[idx])
+            elif(~self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
+                pathOptimized.append(path[idx])
+
+        return pathOptimized
+
+    def redundant_point(self, last, curr, next):
+        if(last[0] == curr[0] == next[0]):
+            return True
+        if(last[1] == curr[1] == next[1]):
+            return True
+        return False
 
     def paint_cells(self, frontier, came_from):
         # type: (list, list) -> None
