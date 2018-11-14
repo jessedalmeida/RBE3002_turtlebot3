@@ -92,8 +92,8 @@ def index2d_to_world(index2d, my_map):
 
     x_index_offset = my_map.info.origin.position.x
     y_index_offset = my_map.info.origin.position.y
-    x_point += x_index_offset
-    y_point += y_index_offset
+    x_point += x_index_offset + res/2
+    y_point += y_index_offset + res/2
 
     return (x_point, y_point)
 

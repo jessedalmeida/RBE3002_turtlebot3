@@ -5,7 +5,7 @@ import sys, select, termios, tty
 import math
 import time
 import numpy
-from geometry_msgs.msg import PoseStamped
+from geometry_msgs.msg import PoseStamped, PointStamped
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
@@ -50,6 +50,22 @@ class Robot:
         self.rotate(angToGoal)
         self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
         self.rotate(-self.yaw + goalAng)
+
+    def nav_to_point(self, goal):
+        # type: (PointStamped) -> None
+        """
+        :param goal: PointtStamped
+        :return:
+        """
+        goalX = goal.point.position.x
+        goalY = goal.point.position.y
+
+        distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
+
+        angToGoal = math.atan2(goalY - self.py, goalX - self.px) - self.yaw
+
+        self.rotate(angToGoal)
+        self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
 
     def drive_straight(self, speed, distance):
         """

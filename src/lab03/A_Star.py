@@ -33,7 +33,6 @@ class A_Star:
         self.map = None
         rospy.logdebug("Initializing A_Star")
 
-
         self.goal = PointStamped()
         self.pose = Pose()
 
@@ -147,11 +146,6 @@ class A_Star:
         self.paint_obstacles(new_path)
         self.paint_cells(frontier_list, new_path)
 
-
-    def tester(self, point):
-        a = map_helper.world_to_index2d(point, self.map)
-        rospy.logdebug("Neighbors of %s are %s " % (point, a))
-
     def euclidean_heuristic(self, point1, point2):
         """
             calculate the dist between two points
@@ -236,14 +230,7 @@ class A_Star:
         :param obstacles: list of tuples
         :return:
         """
-
         rospy.logdebug("Painting Path")
-        # obstacles = [(i, i) for i in range(10)]
-        # if self.goal:
-        #     obstacles = [(self.goal.point.x, self.goal.point.y)]
-        # else:
-        #     obstacles = [(3,3)]
-
         cells = map_helper.to_grid_cells(obstacles, self.map)
         self.obstacles_pub.publish(cells)
 
