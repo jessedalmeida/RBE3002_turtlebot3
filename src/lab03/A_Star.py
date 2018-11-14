@@ -33,7 +33,6 @@ class A_Star:
         self.map = None
         rospy.logdebug("Initializing A_Star")
 
-
         self.goal = PointStamped()
         self.pose = Pose()
 
