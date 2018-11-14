@@ -1,10 +1,11 @@
 #!/usr/bin/env python
 import rospy
 from nav_msgs.msg import OccupancyGrid, GridCells
-from geometry_msgs.msg import PointStamped, Pose
+from geometry_msgs.msg import PointStamped, Pose, PoseStamped
 import map_helper
 from PriorityQueue import PriorityQueue
 import math
+from rbe3002.srv import *
 
 
 class A_Star:
@@ -27,13 +28,15 @@ class A_Star:
 
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
-        rospy.Subscriber("/clicked_point", PointStamped, self.paint_point)
+
+        service = rospy.Service('make_path', MakePath, self.handle_a_star)
 
         # Set map to none
         self.map = None
         rospy.logdebug("Initializing A_Star")
 
-        self.goal = PointStamped()
+
+        self.goal = PoseStamped()
         self.pose = Pose()
 
         self.rate = rospy.Rate(.5)
@@ -43,6 +46,7 @@ class A_Star:
 
 
     def handle_a_star(self, req):
+        # type: (MakePath) -> None
 
         """
             service call that uses A* to create a path.
@@ -50,7 +54,10 @@ class A_Star:
             :param req: GetPlan
             :return: Path()
         """
-        pass
+        start = req.start
+        goal = req.goal
+        self.paint_point(start, goal)
+
 
     def dynamic_map_client(self, new_map):
 
@@ -67,14 +74,16 @@ class A_Star:
         y_index_offset = self.map.info.origin.position.y
         rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
 
-    def paint_point(self, point):
+    def paint_point(self, start_pose, end_pose):
         """
         Subscriber client to get the published goal point and paint it in rviz
         :param point: goal point
         """
-        self.goal = point
-        x = point.point.x
-        y = point.point.y
+        self.goal = end_pose
+        x = end_pose.pose.point.x
+        y = end_pose.pose.point.y
+        quat = end_pose.pose.orientation
+        euler = G
         rospy.logdebug("New goal: %s %s" % (x, y))
 
         painted_cell = map_helper.to_grid_cells([(x,y)], self.map)
@@ -135,8 +144,6 @@ class A_Star:
             next_node = came_from[last_node]
             path.insert(0, map_helper.index2d_to_world(next_node, self.map))
             last_node = next_node
-
-        #rospy.logdebug("Path %s " % path)
 
         new_path = self.optimize_path(path)
         rospy.logdebug("Path %s " % new_path)
