@@ -6,6 +6,8 @@ import map_helper
 from PriorityQueue import PriorityQueue
 import math
 from rbe3002.srv import *
+import tf
+from tf.transformations import euler_from_quaternion
 
 
 class A_Star:
@@ -37,6 +39,7 @@ class A_Star:
 
 
         self.goal = PoseStamped()
+        self.start = PoseStamped()
         self.pose = Pose()
 
         self.rate = rospy.Rate(.5)
@@ -79,16 +82,26 @@ class A_Star:
         Subscriber client to get the published goal point and paint it in rviz
         :param point: goal point
         """
+        self.start = start_pose
+        start_x = start_pose.pose.point.x
+        start_y = start_pose.pose.point.y
+        start_quat = start_pose.pose.orientation
+        start_euler = euler_from_quaternion(start_quat)
+        start_ang = start_euler[2]
+
         self.goal = end_pose
-        x = end_pose.pose.point.x
-        y = end_pose.pose.point.y
-        quat = end_pose.pose.orientation
-        euler = G
-        rospy.logdebug("New goal: %s %s" % (x, y))
+        end_x = end_pose.pose.point.x
+        end_y = end_pose.pose.point.y
+        end_quat = end_pose.pose.orientation
+        end_euler = euler_from_quaternion(end_quat)
+        end_ang = end_euler[2]
+
+        rospy.logdebug("Start x, y, ang: %s %s %s" % (start_x, start_y, start_ang))
+        rospy.logdebug("Goal x, y, ang: %s %s %s" % (end_x, end_y, end_ang))
 
         painted_cell = map_helper.to_grid_cells([(x,y)], self.map)
 
-        self.a_star((0, 0), (x, y))
+        self.a_star((start_x, start_y), (end_x, end_y))
         self.point_pub.publish(painted_cell)
 
 
