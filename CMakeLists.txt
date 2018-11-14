@@ -4,6 +4,8 @@ project(rbe3002)
 
 find_package(catkin REQUIRED COMPONENTS
   rospy
+  std_msgs
+  message_generation
 )
 
 
@@ -12,16 +14,20 @@ catkin_python_setup()
 
 
 catkin_package(
-
-  INCLUDE_DIRS src/lab02
   INCLUDE_DIRS src/lab03
   INCLUDE_DIRS src/lab04
-
+  CATKIN_DEPENDS message_runtime
 )
 
 include_directories(
   include
   ${catkin_INCLUDE_DIRS}
+)
+
+add_service_files(
+  FILES
+  MakePath.srv
+  RobotNav.srv
 )
 #############
 ## Testing ##
