@@ -1,11 +1,11 @@
 #!/usr/bin/env python
 import rospy
-from nav_msgs.msg import OccupancyGrid, GridCells
-from geometry_msgs.msg import PointStamped, Pose, PoseStamped
+from nav_msgs.msg import OccupancyGrid, GridCells, Path
+from geometry_msgs.msg import PointStamped, Pose, PoseStamped, Point
 import map_helper
 from PriorityQueue import PriorityQueue
 import math
-from rbe3002.srv import *
+from rbe3002.srv import MakePath
 import tf
 from tf.transformations import euler_from_quaternion
 
@@ -24,29 +24,29 @@ class A_Star:
 
         #Setup Map Publishers
         self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", GridCells, queue_size=10)
-        self.path_pub = rospy.Publisher("local_costmap/path", GridCells, queue_size=10)
+        self.path_pub = rospy.Publisher("local_costmap/path", Path, queue_size=10)
         self.point_pub = rospy.Publisher("/point_cell", GridCells, queue_size=10)
         self.wavefront_pub = rospy.Publisher("local_costmap/wavefront", GridCells, queue_size=10)
 
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
 
-        service = rospy.Service('make_path', MakePath, self.handle_a_star)
+        # Setup service server
+        rospy.Service('make_path', MakePath, self.handle_a_star)
 
         # Set map to none
         self.map = None
         rospy.logdebug("Initializing A_Star")
 
-
         self.goal = PoseStamped()
         self.start = PoseStamped()
         self.pose = Pose()
+        self.points = None
 
         self.rate = rospy.Rate(.5)
 
         while self.map is None and not rospy.is_shutdown():
             pass
-
 
     def handle_a_star(self, req):
         # type: (MakePath) -> None
@@ -57,10 +57,15 @@ class A_Star:
             :param req: GetPlan
             :return: Path()
         """
+        # Read inputs
         start = req.start
         goal = req.goal
+        # Generate map
         self.paint_point(start, goal)
-
+        # Path from list of points
+        path = self.publish_path(self.points)
+        # Return path in service call
+        return path
 
     def dynamic_map_client(self, new_map):
 
@@ -83,27 +88,28 @@ class A_Star:
         :param point: goal point
         """
         self.start = start_pose
-        start_x = start_pose.pose.point.x
-        start_y = start_pose.pose.point.y
-        start_quat = start_pose.pose.orientation
+        start_x = start_pose.pose.position.x
+        start_y = start_pose.pose.position.y
+        sq = start_pose.pose.orientation
+        start_quat = [sq.x, sq.y, sq.z, sq.w]
         start_euler = euler_from_quaternion(start_quat)
         start_ang = start_euler[2]
 
         self.goal = end_pose
-        end_x = end_pose.pose.point.x
-        end_y = end_pose.pose.point.y
-        end_quat = end_pose.pose.orientation
+        end_x = end_pose.pose.position.x
+        end_y = end_pose.pose.position.y
+        eq = end_pose.pose.orientation
+        end_quat = [eq.x, eq.y, eq.z, eq.w]
         end_euler = euler_from_quaternion(end_quat)
         end_ang = end_euler[2]
 
         rospy.logdebug("Start x, y, ang: %s %s %s" % (start_x, start_y, start_ang))
         rospy.logdebug("Goal x, y, ang: %s %s %s" % (end_x, end_y, end_ang))
 
-        painted_cell = map_helper.to_grid_cells([(x,y)], self.map)
+        painted_cell = map_helper.to_grid_cells([(end_x, end_y)], self.map)
 
         self.a_star((start_x, start_y), (end_x, end_y))
         self.point_pub.publish(painted_cell)
-
 
     def a_star(self, start, goal):
         """
@@ -165,11 +171,7 @@ class A_Star:
 
         self.paint_obstacles(new_path)
         self.paint_cells(frontier_list, new_path)
-
-
-    def tester(self, point):
-        a = map_helper.world_to_index2d(point, self.map)
-        rospy.logdebug("Neighbors of %s are %s " % (point, a))
+        self.points = new_path
 
     def euclidean_heuristic(self, point1, point2):
         """
@@ -211,17 +213,17 @@ class A_Star:
         pathOptimized = []
 
         for idx in range(len(path)):
-            if(idx == 0 or idx == len(path)-1):
+            if idx == 0 or idx == len(path) - 1:
                 pathOptimized.append(path[idx])
-            elif(not self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
+            elif not self.redundant_point(path[idx - 1], path[idx], path[idx + 1]):
                 pathOptimized.append(path[idx])
 
         return pathOptimized
 
     def redundant_point(self, last, curr, next):
-        if(last[0] == curr[0] == next[0]):
+        if last[0] == curr[0] == next[0]:
             return True
-        if(last[1] == curr[1] == next[1]):
+        if last[1] == curr[1] == next[1]:
             return True
         return False
 
@@ -241,7 +243,24 @@ class A_Star:
             :param points: list of tuples of the path
             :return: Path()
         """
-        pass
+        path_poses = []
+        for point in points:
+            # Generate pose
+            pose = PoseStamped()
+            # Mark frame
+            pose.header.frame_id = "/odom"
+            # Populate pose
+            pose.pose.position.x = point[0]
+            pose.pose.position.y = point[1]
+            path_poses += [pose]
+        # Make path message
+        path = Path()
+        path.header.frame_id = "/odom"
+        path.poses = path_poses
+        # Publish to rviz
+        self.path_pub.publish(path)
+        # Return to send back in service reply
+        return path
 
     def draw_circle(self):
         obstacles = [(math.cos(i/3.0), math.sin(i/3.0)) for i in range(0, 20)]
@@ -255,14 +274,7 @@ class A_Star:
         :param obstacles: list of tuples
         :return:
         """
-
         rospy.logdebug("Painting Path")
-        # obstacles = [(i, i) for i in range(10)]
-        # if self.goal:
-        #     obstacles = [(self.goal.point.x, self.goal.point.y)]
-        # else:
-        #     obstacles = [(3,3)]
-
         cells = map_helper.to_grid_cells(obstacles, self.map)
         self.obstacles_pub.publish(cells)
 

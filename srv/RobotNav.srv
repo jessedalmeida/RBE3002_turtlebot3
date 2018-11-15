@@ -1,0 +1,4 @@
+geometry_msgs/PoseStamped goal
+bool ignoreOrientation
+---
+bool success
