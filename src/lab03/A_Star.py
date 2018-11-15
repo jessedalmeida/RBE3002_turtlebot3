@@ -50,7 +50,6 @@ class A_Star:
 
     def handle_a_star(self, req):
         # type: (MakePath) -> None
-
         """
             service call that uses A* to create a path.
             This can be altered to also grab the orentation for better heuristic

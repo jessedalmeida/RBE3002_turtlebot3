@@ -56,8 +56,15 @@ class Nav_astar_path:
 
         # path_response = self.make_path(self.pose, self.goal)
         path_response = self.make_path(self.pose, goal)
+        poses = path_response.path
         rospy.logdebug("Response was %s" % path_response)
         rospy.logdebug("Response path was %s" % path_response.path)
+
+        for pose in poses[1:-1]:
+            if not self.robot_nav(pose, True):
+                rospy.logwarn("Robot navigation failed")
+                return
+        self.robot_nav(goal, False)
 
 
 if __name__ == '__main__':
