@@ -3,6 +3,7 @@ import rospy
 from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
+from rbe3002.srv import MakePath, RobotNav
 
 
 class Nav_astar_path:
@@ -20,7 +21,13 @@ class Nav_astar_path:
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
         rospy.Subscriber("/move_base_simple/goal", PoseStamped, self.goal_callback)
 
+        # Setup service proxys
+        self.make_path = rospy.ServiceProxy('make_path', MakePath)
+        self.robot_nav = rospy.ServiceProxy('robot_nav', RobotNav)
+
         self.goal = PoseStamped()
+
+        self.pose = None
 
     def odom_callback(self, msg):
         # type: (Odometry) -> None
@@ -29,28 +36,29 @@ class Nav_astar_path:
         :type msg: Odom
         :return:
         """
-        self.px = msg.pose.pose.position.x
-        self.py = msg.pose.pose.position.y
-        quat = msg.pose.pose.orientation
-        q = [quat.x, quat.y, quat.z, quat.w]
-        self.roll, self.pitch, self.yaw = euler_from_quaternion(q)
+        self.pose = msg.pose
+        # self.px = msg.pose.pose.position.x
+        # self.py = msg.pose.pose.position.y
+        # quat = msg.pose.pose.orientation
+        # q = [quat.x, quat.y, quat.z, quat.w]
+        # self.roll, self.pitch, self.yaw = euler_from_quaternion(q)
 
-
-
-    def goal_callback(self, msg):
+    def goal_callback(self, goal):
         # type: (PoseStamped) -> None
         """
         Call back function for when a 2D nav goal is published in rviz
         :param goal: PoseStamped
         :return:
         """
-        self.goal = msg
+        if self.pose is None:
+            rospy.logwarn("No known pose!")
+            return
 
+        path_response = self.make_path(self.pose, self.goal)
+        rospy.logdebug("Response was %s" % path_response)
+        rospy.logdebug("Response path was %s" % path_response.path)
 
-
-
-
-
+        self.goal = goal
 
 
 if __name__ == '__main__':

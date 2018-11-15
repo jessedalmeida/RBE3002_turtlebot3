@@ -5,7 +5,7 @@ from geometry_msgs.msg import PointStamped, Pose, PoseStamped
 import map_helper
 from PriorityQueue import PriorityQueue
 import math
-from rbe3002.srv import *
+from rbe3002.srv import MakePath
 import tf
 from tf.transformations import euler_from_quaternion
 
@@ -31,12 +31,12 @@ class A_Star:
         # Setup Map Subscriber
         rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
 
-        service = rospy.Service('make_path', MakePath, self.handle_a_star)
+        # Setup service server
+        rospy.Service('make_path', MakePath, self.handle_a_star)
 
         # Set map to none
         self.map = None
         rospy.logdebug("Initializing A_Star")
-
 
         self.goal = PoseStamped()
         self.start = PoseStamped()
@@ -46,7 +46,6 @@ class A_Star:
 
         while self.map is None and not rospy.is_shutdown():
             pass
-
 
     def handle_a_star(self, req):
         # type: (MakePath) -> None
@@ -60,7 +59,6 @@ class A_Star:
         start = req.start
         goal = req.goal
         self.paint_point(start, goal)
-
 
     def dynamic_map_client(self, new_map):
 
@@ -103,7 +101,6 @@ class A_Star:
 
         self.a_star((start_x, start_y), (end_x, end_y))
         self.point_pub.publish(painted_cell)
-
 
     def a_star(self, start, goal):
         """
@@ -206,17 +203,17 @@ class A_Star:
         pathOptimized = []
 
         for idx in range(len(path)):
-            if(idx == 0 or idx == len(path)-1):
+            if idx == 0 or idx == len(path) - 1:
                 pathOptimized.append(path[idx])
-            elif(not self.redundant_point(path[idx - 1], path[idx], path[idx + 1])):
+            elif not self.redundant_point(path[idx - 1], path[idx], path[idx + 1]):
                 pathOptimized.append(path[idx])
 
         return pathOptimized
 
     def redundant_point(self, last, curr, next):
-        if(last[0] == curr[0] == next[0]):
+        if last[0] == curr[0] == next[0]:
             return True
-        if(last[1] == curr[1] == next[1]):
+        if last[1] == curr[1] == next[1]:
             return True
         return False
 

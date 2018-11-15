@@ -162,7 +162,6 @@ class Robot:
 
         return aMat
 
-
     def odom_callback(self, msg):
 
         """
