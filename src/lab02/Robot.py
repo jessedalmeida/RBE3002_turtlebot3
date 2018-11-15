@@ -21,17 +21,26 @@ class Robot:
         """"
         Set up the node here
         """
+        # Init node
         rospy.init_node('robot_drive_controller')
+        # Setup ros publishers
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
+        # Setup subscribers
         self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odom_callback)
         self.sub_goal = rospy.Subscriber("/goal", PoseStamped, self.nav_to_pose)
+        # Setup service client
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
 
     def handle_robot_nav(self, req):
+        """
+        Handler for robot_nav service
+        :param req: RobotNav request
+        :return:
+        """
         # type: (RobotNav) -> None
         goal = req.goal
         ignore_orientation = req.ignoreOrientation
-
+        # Determine if the orientation needs to be ignored
         if(ignore_orientation):
             self.nav_to_point(goal)
             return True
@@ -209,6 +218,18 @@ class Robot:
         return ((angle + math.pi) % (2 * math.pi)) - math.pi
 
     def aVals(self, t0, tf, p0, pf, v0, vf, a0, af):
+        """
+        Helper for trajectory planning
+        :param t0: Initial time
+        :param tf: End time
+        :param p0: Initial position
+        :param pf: Final position
+        :param v0: Initial velocity
+        :param vf: Final velocity
+        :param a0: Initial acceleration
+        :param af: Final acceleration
+        :return: parameters for trajectory
+        """
         tMat = numpy.array([[1, t0, pow(t0, 2), pow(t0, 3), pow(t0, 4), pow(t0, 5)],
                             [0, 1, 2 * t0, 3 * pow(t0, 2), 4 * pow(t0, 3), 5 * pow(t0, 4)],
                             [0, 0, 2, 6 * t0, 12 * pow(t0, 2), 20 * pow(t0, 3)],

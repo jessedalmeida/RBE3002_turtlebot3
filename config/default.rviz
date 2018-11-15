@@ -9,7 +9,6 @@ Panels:
         - /GridCells2
         - /GridCells3
         - /Path1
-        - /Path1/Status1
       Splitter Ratio: 0.602941155
     Tree Height: 516
   - Class: rviz/Selection

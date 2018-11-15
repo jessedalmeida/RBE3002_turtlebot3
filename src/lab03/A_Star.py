@@ -23,7 +23,7 @@ class A_Star:
         rospy.init_node("a_star", log_level=rospy.DEBUG)  # start node
 
         #Setup Map Publishers
-        self.obstacles_pub = rospy.Publisher("local_costmap/obstacles", GridCells, queue_size=10)
+        self.waypoints_pub = rospy.Publisher("local_costmap/waypoints", GridCells, queue_size=10)
         self.path_pub = rospy.Publisher("local_costmap/path", Path, queue_size=10)
         self.point_pub = rospy.Publisher("/point_cell", GridCells, queue_size=10)
         self.wavefront_pub = rospy.Publisher("local_costmap/wavefront", GridCells, queue_size=10)
@@ -74,8 +74,9 @@ class A_Star:
             :return:
         """
         rospy.logdebug("Getting map")
-
+        # Update map
         self.map = new_map
+        # Show map details for debugging
         rospy.logdebug("Resolution is: %s" % new_map.info.resolution)
         x_index_offset = self.map.info.origin.position.x
         y_index_offset = self.map.info.origin.position.y
@@ -83,9 +84,11 @@ class A_Star:
 
     def paint_point(self, start_pose, end_pose):
         """
-        Subscriber client to get the published goal point and paint it in rviz
-        :param point: goal point
+        Takes a start and end pose, calls the A* algorithm and draws grid cells
+        :param start_pose: PoseStamped of the starting position
+        :param end_pose: PoseStamped of the ending position
         """
+        # Extract start point information
         self.start = start_pose
         start_x = start_pose.pose.position.x
         start_y = start_pose.pose.position.y
@@ -93,7 +96,7 @@ class A_Star:
         start_quat = [sq.x, sq.y, sq.z, sq.w]
         start_euler = euler_from_quaternion(start_quat)
         start_ang = start_euler[2]
-
+        # Extract end point information
         self.goal = end_pose
         end_x = end_pose.pose.position.x
         end_y = end_pose.pose.position.y
@@ -102,12 +105,17 @@ class A_Star:
         end_euler = euler_from_quaternion(end_quat)
         end_ang = end_euler[2]
 
+        # Print debug information
         rospy.logdebug("Start x, y, ang: %s %s %s" % (start_x, start_y, start_ang))
         rospy.logdebug("Goal x, y, ang: %s %s %s" % (end_x, end_y, end_ang))
 
+        # Generate cell for end position
         painted_cell = map_helper.to_grid_cells([(end_x, end_y)], self.map)
 
+        # Call A*
         self.a_star((start_x, start_y), (end_x, end_y))
+
+        # Publish end point
         self.point_pub.publish(painted_cell)
 
     def a_star(self, start, goal):
@@ -118,28 +126,37 @@ class A_Star:
             :param goal: tuple of goal pose
             :return: dict of tuples
         """
+        # Transform start and end
         start = map_helper.world_to_index2d(start, self.map)
         goal = map_helper.world_to_index2d(goal, self.map)
 
+        # Priority queue for frontier
         frontier = PriorityQueue()
         frontier.put(start, 0)
+        # To find path at end
         came_from = {}
+        # Track cost to reach each point
         cost_so_far = {}
+
+        # Initially start
         came_from[start] = None
         cost_so_far[start] = 0
 
+        # Loop till finding a path
         while not frontier.empty():
+            # Pop best cell from frontier
             current = frontier.get()
             rospy.logdebug("Current Node %s " % (current, ))
 
+            # Done!
             if current == goal:
                 break
 
-            # for next in graph.neighbors(current):
+            # Add neighbors to frontier
             for next in map_helper.get_neighbors(current, self.map):
                 rospy.logdebug("Next node %s" % (next,))
 
-
+                # Find cost
                 new_cost = cost_so_far[current] + self.move_cost(current, next)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
@@ -147,6 +164,7 @@ class A_Star:
                     frontier.put(next, priority)
                     came_from[next] = current
 
+        # Display frontier cells
         frontier_list = frontier.get_items()
         frontier_map = []
         frontier_to_display = []
@@ -154,8 +172,10 @@ class A_Star:
             frontier_map.append(map_helper.world_to_index2d(point, self.map))
             frontier_to_display.append(map_helper.index2d_to_world(point, self.map))
 
+        # Print debug
         rospy.logdebug("Frontier list: %s " % frontier_list)
 
+        # Generate path
         path = [map_helper.index2d_to_world(goal, self.map)]
         last_node = goal
         while came_from[last_node] is not None:
@@ -220,6 +240,13 @@ class A_Star:
         return pathOptimized
 
     def redundant_point(self, last, curr, next):
+        """
+        Determines whether a point is redundant
+        :param last: preceding point
+        :param curr: point to check for redundancy
+        :param next: following point
+        :return: return whether the point is directly between adjacent points
+        """
         if last[0] == curr[0] == next[0]:
             return True
         if last[1] == curr[1] == next[1]:
@@ -265,7 +292,7 @@ class A_Star:
         obstacles = [(math.cos(i/3.0), math.sin(i/3.0)) for i in range(0, 20)]
         rospy.logdebug(obstacles)
         cells = map_helper.to_grid_cells(obstacles, self.map)
-        self.obstacles_pub.publish(cells)
+        self.waypoints_pub.publish(cells)
 
     def paint_obstacles(self, obstacles):
         """
@@ -275,7 +302,7 @@ class A_Star:
         """
         rospy.logdebug("Painting Path")
         cells = map_helper.to_grid_cells(obstacles, self.map)
-        self.obstacles_pub.publish(cells)
+        self.waypoints_pub.publish(cells)
 
     def paint_wavefront(self, wavefront):
         """
@@ -292,6 +319,7 @@ if __name__ == '__main__':
 
     rate = rospy.Rate(1)
     rate.sleep()
+    # Draw the circle
     astar.draw_circle()
     while not rospy.is_shutdown():
         # astar.draw_circle()

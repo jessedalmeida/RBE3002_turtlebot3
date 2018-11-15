@@ -60,6 +60,7 @@ class Nav_astar_path:
         rospy.logdebug("Response was %s" % path_response)
         rospy.logdebug("Response path was %s" % path_response.path)
 
+        # Tell robot to drive to each point
         for pose in poses[1:-1]:
             rospy.logdebug("Sending pose %s" % pose)
             if not self.robot_nav(pose, True):
