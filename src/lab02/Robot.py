@@ -69,7 +69,7 @@ class Robot:
 
     def drive_straight(self, speed, distance):
         """
-        Make the turtlebot drive shraight
+        Make the turtlebot drive straight
         :type speed: float
         :type distance: float
         :param speed: speed to drive
@@ -105,10 +105,13 @@ class Robot:
         a4 = aVals[4][0]
         a5 = aVals[5][0]
 
-        while(rospy.Time.now().secs < tf):
+        # 5ms loop rate
+        rate = rospy.Rate(5)
+        while(rospy.Time.now().secs < tf and not rospy.is_shutdown()):
             t = rospy.Time.now().secs - t0
-            twist.linear.x = a1 + 2*a2*t + 3*a3*pow(t,2) + 4*a4*pow(t,3) + 5*a5*pow(t,4)
+            twist.linear.x = a1 + 2*a2*t + 3*a3*pow(t, 2) + 4*a4*pow(t, 3) + 5*a5*pow(t, 4)
             self.pub.publish(twist)
+            rate.sleep()
 
         twist.linear.x = 0.0
         self.pub.publish(twist)
@@ -133,14 +136,18 @@ class Robot:
         endAng = endAng - 2 * math.pi if endAng > math.pi else endAng
         endAng = endAng + 2 * math.pi if endAng < -math.pi else endAng
 
+        # 5ms loop rate
+        rospy.Rate(5)
         if (startAng < endAng):
-            while (self.yaw < endAng):
+            while self.yaw < endAng and not rospy.is_shutdown():
                 twist.angular.z = Robot.MAX_ANG_VEL
                 self.pub.publish(twist)
+                rospy.sleep()
         else:
-            while (self.yaw > endAng):
+            while self.yaw > endAng and not rospy.is_shutdown():
                 twist.angular.z = -Robot.MAX_ANG_VEL
                 self.pub.publish(twist)
+                rospy.sleep()
 
         twist.angular.z = 0.0
         self.pub.publish(twist)
