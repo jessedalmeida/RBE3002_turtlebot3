@@ -14,7 +14,7 @@ from tf.transformations import euler_from_quaternion
 from rbe3002.srv import RobotNav
 
 class Robot:
-    MAX_ANG_VEL = 2.84
+    MAX_ANG_VEL = 1.0
     MAX_LIN_VEL = 0.2
 
     def __init__(self):
@@ -151,17 +151,17 @@ class Robot:
         endAng = endAng + 2 * math.pi if endAng < -math.pi else endAng
 
         # 5ms loop rate
-        rospy.Rate(5)
+        rate = rospy.Rate(5)
         if (startAng < endAng):
             while self.yaw < endAng and not rospy.is_shutdown():
                 twist.angular.z = Robot.MAX_ANG_VEL
                 self.pub.publish(twist)
-                rospy.sleep()
+                rate.sleep()
         else:
             while self.yaw > endAng and not rospy.is_shutdown():
                 twist.angular.z = -Robot.MAX_ANG_VEL
                 self.pub.publish(twist)
-                rospy.sleep()
+                rate.sleep()
 
         twist.angular.z = 0.0
         self.pub.publish(twist)
@@ -207,6 +207,6 @@ if __name__ == '__main__':
     time.sleep(1)
 
     #bot.rotate(math.pi)
-    bot.drive_straight(1,.5)
+    #bot.drive_straight(1,.5)
 
     rospy.spin()
