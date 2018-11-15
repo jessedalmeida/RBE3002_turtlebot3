@@ -57,12 +57,14 @@ class A_Star:
             :param req: GetPlan
             :return: Path()
         """
+        # Read inputs
         start = req.start
         goal = req.goal
+        # Generate map
         self.paint_point(start, goal)
-
+        # Path from list of points
         path = self.publish_path(self.points)
-
+        # Return path in service call
         return path
 
     def dynamic_map_client(self, new_map):
@@ -243,15 +245,21 @@ class A_Star:
         """
         path_poses = []
         for point in points:
+            # Generate pose
             pose = PoseStamped()
-            map_point = map_helper.index2d_to_world(point, self.map)
-            pose.pose.position.x = map_point[0]
-            pose.pose.position.y = map_point[1]
+            # Mark frame
+            pose.header.frame_id = "/odom"
+            # Populate pose
+            pose.pose.position.x = point[0]
+            pose.pose.position.y = point[1]
             path_poses += [pose]
-
+        # Make path message
         path = Path()
+        path.header.frame_id = "/odom"
         path.poses = path_poses
+        # Publish to rviz
         self.path_pub.publish(path)
+        # Return to send back in service reply
         return path
 
     def draw_circle(self):

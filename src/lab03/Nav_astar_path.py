@@ -40,11 +40,6 @@ class Nav_astar_path:
         new_pose = PoseStamped()
         new_pose.pose.position = position
         self.pose = new_pose
-        # self.px = msg.pose.pose.position.x
-        # self.py = msg.pose.pose.position.y
-        # quat = msg.pose.pose.orientation
-        # q = [quat.x, quat.y, quat.z, quat.w]
-        # self.roll, self.pitch, self.yaw = euler_from_quaternion(q)
 
     def goal_callback(self, goal):
         # type: (PoseStamped) -> None
