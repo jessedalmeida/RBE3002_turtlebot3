@@ -36,7 +36,10 @@ class Nav_astar_path:
         :type msg: Odom
         :return:
         """
-        self.pose = msg.pose
+        position = msg.pose.pose.position
+        new_pose = PoseStamped()
+        new_pose.pose.position = position
+        self.pose = new_pose
         # self.px = msg.pose.pose.position.x
         # self.py = msg.pose.pose.position.y
         # quat = msg.pose.pose.orientation
@@ -54,11 +57,12 @@ class Nav_astar_path:
             rospy.logwarn("No known pose!")
             return
 
-        path_response = self.make_path(self.pose, self.goal)
+        self.goal = goal
+
+        # path_response = self.make_path(self.pose, self.goal)
+        path_response = self.make_path(self.pose, goal)
         rospy.logdebug("Response was %s" % path_response)
         rospy.logdebug("Response path was %s" % path_response.path)
-
-        self.goal = goal
 
 
 if __name__ == '__main__':
