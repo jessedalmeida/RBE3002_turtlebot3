@@ -21,7 +21,7 @@ class Robot:
         """"
         Set up the node here
         """
-        rospy.init_node('lab2_template')
+        rospy.init_node('robot_drive_controller')
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odom_callback)
         self.sub_goal = rospy.Subscriber("/goal", PoseStamped, self.nav_to_pose)
