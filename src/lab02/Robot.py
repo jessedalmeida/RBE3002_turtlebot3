@@ -136,6 +136,40 @@ class Robot:
         :param angle: angle to rotate
         :return:
         """
+        # Set update rate
+        rate = rospy.Rate(10)
+
+        # Initial angle
+        yaw = self.yaw
+        start = yaw
+
+        dest_ang = self.bounded_angle(start + angle)
+        rospy.loginfo("Turning angle: %f" % (angle))
+        error = self.bounded_angle(dest_ang - yaw)
+
+        # Loop while not there yet
+        while not rospy.is_shutdown() and \
+                abs(error) > .03:
+            cmd = Twist()
+            cmd.linear.x = 0
+            error = self.bounded_angle(dest_ang - yaw)
+            # Proportional + feed forward control
+            cmd.angular.z = error * (.3 + .1/abs(error))
+            self.pub.publish(cmd)
+            # Update position
+            yaw = self.yaw
+            rate.sleep()
+        # Stop robot
+        cmd = Twist()
+        self.pub.publish(cmd)
+        rospy.loginfo("Done turning")
+
+    def oldrotate(self, angle):
+        """
+        Rotate in place
+        :param angle: angle to rotate
+        :return:
+        """
 
         twist = Twist()
         twist.angular.x = 0.0
@@ -165,6 +199,14 @@ class Robot:
 
         twist.angular.z = 0.0
         self.pub.publish(twist)
+
+    def bounded_angle(self, angle):
+        """
+        Corrects angle wrap, by moving it between -pi and pi
+        :param angle: Input angle in radians
+        :return: Angle between pi and -pi radians
+        """
+        return ((angle + math.pi) % (2 * math.pi)) - math.pi
 
     def aVals(self, t0, tf, p0, pf, v0, vf, a0, af):
         tMat = numpy.array([[1, t0, pow(t0, 2), pow(t0, 3), pow(t0, 4), pow(t0, 5)],
