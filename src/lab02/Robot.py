@@ -11,6 +11,7 @@ from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry
 from tf.transformations import euler_from_quaternion
+from rbe3002.srv import RobotNav
 
 class Robot:
     MAX_ANG_VEL = 2.84
@@ -22,8 +23,21 @@ class Robot:
         """
         rospy.init_node('lab2_template')
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
-        self.sub = rospy.Subscriber("/odom", Odometry, self.odom_callback)
-        self.sub = rospy.Subscriber("/goal", PoseStamped, self.nav_to_pose)
+        self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odom_callback)
+        self.sub_goal = rospy.Subscriber("/goal", PoseStamped, self.nav_to_pose)
+        self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
+
+    def handle_robot_nav(self, req):
+        # type: (RobotNav) -> None
+        goal = req.goal
+        ignore_orientation = req.ignoreOrientation
+
+        if(ignore_orientation):
+            self.nav_to_point(goal)
+            return True
+        else:
+            self.nav_to_pose(goal)
+            return True
 
     def nav_to_pose(self, goal):
         # type: (PoseStamped) -> None
@@ -52,13 +66,13 @@ class Robot:
         self.rotate(-self.yaw + goalAng)
 
     def nav_to_point(self, goal):
-        # type: (PointStamped) -> None
+        # type: (PoseStamped) -> None
         """
-        :param goal: PointtStamped
+        :param goal: PoseStamped
         :return:
         """
-        goalX = goal.point.position.x
-        goalY = goal.point.position.y
+        goalX = goal.pose.position.x
+        goalY = goal.pose.position.y
 
         distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
 
