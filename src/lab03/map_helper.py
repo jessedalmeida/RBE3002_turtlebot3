@@ -159,6 +159,12 @@ def to_grid_cells(cells_to_paint, my_map):
 
     return grid
 
+def index1d_to_index2d(index1d, my_map):
+    width = my_map.width
+
+    y = (int)(index1d/ width)
+    x = index1d - (y * width)
+    return (x, y)
 
 def index2d_to_index1d(index2d, my_map):
     return index2d[1] * my_map.info.width + index2d[0]
