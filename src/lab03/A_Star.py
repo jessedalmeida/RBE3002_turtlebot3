@@ -63,6 +63,10 @@ class A_Star:
         self.paint_point(start, goal)
         # Path from list of points
         path = self.publish_path(self.points)
+
+        # Path until horizon
+        horizon_path = self.horizon_path(path)
+
         # Return path in service call
         return path
 
@@ -210,6 +214,15 @@ class A_Star:
               :param next: tuple of location
               :return: dist between two points
         """
+        return self.straight_line_dist(current, next)
+
+    def straight_line_dist(self, current, next):
+        """
+              calculate the dist between two points
+              :param current: tuple of location
+              :param next: tuple of location
+              :return: dist between two points
+        """
         return abs(current[0] - next[0]) + abs(current[1] - next[1])
 
     def reconstruct_path(self, start, goal, came_from):
@@ -287,6 +300,59 @@ class A_Star:
         self.path_pub.publish(path)
         # Return to send back in service reply
         return path
+
+    def horizon_path(self, path):
+        """
+        Takes in a path from a start point to an end point. Returns the waypoints along the first horizon distance of the path
+        :param path: Path()
+        :return: Path()
+        """
+
+        horizon_dist = 0.5
+        traveled_dist = 0
+        horizon_path = Path()
+        horizon_path.header.frame_id = "/odom"
+        horizon_path += path.poses[0]
+
+        for idx in range(len(path)):
+            dist = self.straight_line_dist(path.poses[idx].position, path.poses[idx+1].position)
+            traveled_dist += dist
+            if(traveled_dist < horizon_dist):
+                horizon_path.poses += path.poses[idx+1]
+            else:
+                remaining_dist = horizon_dist - traveled_dist
+                horizon_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
+                horizon_path.poses += horizon_pose
+                break
+
+        return horizon_path
+
+    def pose_btw_poses(self, start_pose, end_pose, dist):
+        """
+        takes in two poses and a distance, and returns a pose that is between the two poses, the desired distance away from the starting pose
+        :param start_pose: PoseStamped()
+        :param end_pose: PoseStamped()
+        :param dist: double
+        :return: PoseStamped()
+        """
+        intermediate_pose = PoseStamped()
+        intermediate_pose.header.frame_id = start_pose.header.frame_id
+
+        if(start_pose.pose.position.x == end_pose.pose.position.x and start_pose.pose.position.y < end_pose.pose.position.y):
+            intermediate_pose.pose.position.x = start_pose.pose.position.x
+            intermediate_pose.pose.position.y = start_pose.pose.position.y + dist
+        if(start_pose.pose.position.x == end_pose.pose.position.x and start_pose.pose.position.y > end_pose.pose.position.y):
+            intermediate_pose.pose.position.x = start_pose.pose.position.x
+            intermediate_pose.pose.position.y = start_pose.pose.position.y - dist
+
+        if (start_pose.pose.position.x < end_pose.pose.position.x and start_pose.pose.position.y == end_pose.pose.position.y):
+            intermediate_pose.pose.position.x = start_pose.pose.position.x + dist
+            intermediate_pose.pose.position.y = start_pose.pose.position.y
+        if (start_pose.pose.position.x > end_pose.pose.position.x and start_pose.pose.position.y == end_pose.pose.position.y):
+            intermediate_pose.pose.position.x = start_pose.pose.position.x - dist
+            intermediate_pose.pose.position.y = start_pose.pose.position.y
+
+        return intermediate_pose
 
     def draw_circle(self):
         obstacles = [(math.cos(i/3.0), math.sin(i/3.0)) for i in range(0, 20)]
