@@ -17,8 +17,17 @@ class Expand_Map:
         # Initialize node
         rospy.init_node("expand_map", log_level=rospy.DEBUG)
 
-        # Setup Map Subscriber
+        # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
+
+        # Publishers
+        # Full Path
+        # Horizon Path
+
+        # Service Calls
+        # Expanded Map
+        # Full Path
+        # Horizon Path
 
         self.map = None
 
@@ -43,7 +52,6 @@ class Expand_Map:
 
 
     def handle_map(self, req):
-
         """
             Service call to get map and expand it
             :return:
