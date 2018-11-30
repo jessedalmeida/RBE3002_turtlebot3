@@ -17,6 +17,7 @@ add_service_files(
   FILES
   MakePath.srv
   RobotNav.srv
+  FrontierRequest.srv
 )
 
 generate_messages(
