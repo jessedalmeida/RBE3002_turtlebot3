@@ -65,10 +65,10 @@ class A_Star:
         path = self.publish_path(self.points)
 
         # Path until horizon
-        horizon_path = self.horizon_path(path)
+        horiz_path = self.horizon_path(path)
 
-        # Return path in service call
-        return path
+        # Return path and horizon path in service call
+        return path, horiz_path
 
     def dynamic_map_client(self, new_map):
 
