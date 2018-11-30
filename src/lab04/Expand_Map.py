@@ -118,7 +118,7 @@ class Expand_Map:
                 point = map_helper.index1d_to_index2d(i, self.map)
 
                 # rospy.logdebug("Index %s Occupation %s Point %s" %(i, occupation, point))
-                cells_to_paint.append(map_helper.map_to_world(point, self.map))
+                cells_to_paint.append(map_helper.index2d_to_world(point, self.map))
 
                 neighbors = map_helper.get_neighbors(point, self.map)
 
@@ -127,7 +127,7 @@ class Expand_Map:
                     index_of_n = map_helper.index2d_to_index1d(n, self.map)
                     expanded_map.data[index_of_n]
 
-                    cells_to_paint.append(map_helper.map_to_world(n, self.map))
+                    cells_to_paint.append(map_helper.index2d_to_world(n, self.map))
 
                 if self.map.info.resolution < .1:
                     # iterate through neighbors of neighbors
@@ -137,16 +137,13 @@ class Expand_Map:
                 continue
 
         for c in cells_to_paint:
-            # world = map_helper.index2d_to_world(c, self.map)
-            world = c
             p = Point()
-            p.x = (world[0] * .3) - 5
-            p.y = (world[1] * .3) - 5
+            p.x = c[0]
+            p.y = c[1]
 
             grid.cells.append(p)
 
 
-        rospy.logdebug("Publishing Grid Cells")
         self.pub_expanded_grid.publish(grid)
 
         pass
