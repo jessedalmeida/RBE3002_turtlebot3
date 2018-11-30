@@ -100,10 +100,6 @@ class Expand_Map:
         """
         rospy.logdebug("Expanding the map")
 
-        grid = GridCells()
-        grid.header.frame_id = "/odom"
-        grid.cell_height = my_map.info.resolution
-        grid.cell_width = my_map.info.resolution
         cells_to_paint = []
 
         expanded_map = my_map
@@ -113,6 +109,7 @@ class Expand_Map:
         cells = my_map.data
         for i in range(len(cells)):
             occupation = cells[i]
+
             # if occupied
             if occupation > 0:
                 point = map_helper.index1d_to_index2d(i, self.map)
@@ -136,14 +133,7 @@ class Expand_Map:
             else:
                 continue
 
-        for c in cells_to_paint:
-            p = Point()
-            p.x = c[0]
-            p.y = c[1]
-
-            grid.cells.append(p)
-
-
+        grid = map_helper.to_grid_cells(cells_to_paint, self.map)
         self.pub_expanded_grid.publish(grid)
 
         pass
