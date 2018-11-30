@@ -137,11 +137,11 @@ class Expand_Map:
                 continue
 
         for c in cells_to_paint:
-            world = map_helper.index2d_to_world(c, self.map)
-
+            # world = map_helper.index2d_to_world(c, self.map)
+            world = c
             p = Point()
-            p.x = world[0]
-            p.y = world[1]
+            p.x = (world[0] * .3) - 5
+            p.y = (world[1] * .3) - 5
 
             grid.cells.append(p)
 
