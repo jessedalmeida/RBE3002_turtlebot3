@@ -18,6 +18,4 @@
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002)/config/default.rviz"/>
 
-  <node name="map_server" pkg="map_server" type="map_server" args="$(find rbe3002)/maps/simple_map.yaml" />
-
 </launch>
