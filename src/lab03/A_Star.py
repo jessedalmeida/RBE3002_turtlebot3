@@ -204,8 +204,7 @@ class A_Star:
             :return: dist between two points
         """
         #Pythagorian theorem
-        return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
-    pass
+        return map_helper.euclidean_distance(point1, point2)
 
     def move_cost(self, current, next):
         """

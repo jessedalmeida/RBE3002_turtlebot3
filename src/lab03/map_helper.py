@@ -8,11 +8,12 @@
 #!/usr/bin/env python
 import sys
 import rospy
+import math
 from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
 
 
-def get_neighbors(index2d, my_map):
+def get_neighbors(index2d, my_map, occupation=0):
     """
         returns the legal neighbors of index2d
         :param index2d: tuple of index in 2d grid cells
@@ -25,40 +26,40 @@ def get_neighbors(index2d, my_map):
     x_index = index2d[0]
     y_index = index2d[1]
 
-    if(is_valid_index2d((x_index, y_index - 1), my_map)):
+    if(is_valid_index2d((x_index, y_index - 1), my_map, occupation)):
         neighbor_n = (x_index, y_index - 1)
         list_of_neighbors.append(neighbor_n)
 
-    if(is_valid_index2d((x_index + 1, y_index), my_map)):
+    if(is_valid_index2d((x_index + 1, y_index), my_map, occupation)):
         neighbor_e = (x_index + 1, y_index)
         list_of_neighbors.append(neighbor_e)
 
-    if(is_valid_index2d((x_index, y_index + 1), my_map)):
+    if(is_valid_index2d((x_index, y_index + 1), my_map, occupation)):
         neighbor_s = (x_index, y_index + 1)
         list_of_neighbors.append(neighbor_s)
 
-    if(is_valid_index2d((x_index - 1, y_index), my_map)):
+    if(is_valid_index2d((x_index - 1, y_index), my_map, occupation)):
         neighbor_w = (x_index - 1, y_index)
         list_of_neighbors.append(neighbor_w)
 
     return list_of_neighbors
 
-
-def is_valid_index2d(index2d, my_map):
+def is_valid_index2d(index2d, my_map, occupation=0):
     """
         Gets if a point is a legal location
         :param index2d: tuple of location
         :param my_map: 1d map array
+        :param occupation: what value to check for in the cell
         :return: boolean is a legal point
     """
     x_index = index2d[0]
     y_index = index2d[1]
 
-    if(x_index < 0 or x_index > my_map.info.width or y_index < 0 or y_index > my_map.info.height):
+    if x_index < 0 or x_index > my_map.info.width or y_index < 0 or y_index > my_map.info.height:
         return False
 
     cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
-    if(cell_val == 0):
+    if cell_val == occupation:
         return True
     else:
         return False
@@ -66,7 +67,7 @@ def is_valid_index2d(index2d, my_map):
 
 def world_to_index2d(loc, my_map):
     """converts points to the grid"""
-    #take in a real world xy location, give back a 2d index
+    # take in a real world xy location, give back a 2d index
     x_point = loc[0]
     y_point = loc[1]
 
@@ -80,6 +81,7 @@ def world_to_index2d(loc, my_map):
     y_index = int(y_point / res)
 
     return (x_index, y_index)
+
 
 def index2d_to_world(index2d, my_map):
     """convert a 2d index to a point"""
@@ -96,6 +98,17 @@ def index2d_to_world(index2d, my_map):
     y_point += y_index_offset + res/2
 
     return (x_point, y_point)
+
+
+def euclidean_distance(point1, point2):
+    """
+        calculate the dist between two points
+        :param point1: tuple of location
+        :param point2: tuple of location
+        :return: dist between two points
+    """
+    # Pythagorian theorem
+    return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
 
 
 def world_to_map(xy, my_map):

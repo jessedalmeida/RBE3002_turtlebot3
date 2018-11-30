@@ -35,6 +35,9 @@ class Expand_Map:
         # Full Path
         # Horizon Path
 
+        # Setup service server
+        rospy.Service('get_expanded_map', GetMap, self.handle_map)
+
         self.map = OccupancyGrid()
 
         self.rate = rospy.Rate(.5)
