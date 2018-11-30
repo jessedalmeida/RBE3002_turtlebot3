@@ -54,7 +54,7 @@ def is_valid_index2d(index2d, my_map):
     x_index = index2d[0]
     y_index = index2d[1]
 
-    if(x_index < 0 or x_index > my_map.info.width or y_index < 0 or y_index > my_map.info.height):
+    if(x_index < 0 or x_index >= my_map.info.width or y_index < 0 or y_index >= my_map.info.height):
         return False
 
     cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
@@ -152,7 +152,6 @@ def to_grid_cells(cells_to_paint, my_map):
     # Fill in points
     for index2d in cells_to_paint:
         point = Point()
-        # point.x, point.y = index2d_to_point(index2d, my_map)
         point.x = index2d[0]
         point.y = index2d[1]
         grid.cells.append(point)
@@ -160,7 +159,7 @@ def to_grid_cells(cells_to_paint, my_map):
     return grid
 
 def index1d_to_index2d(index1d, my_map):
-    width = my_map.width
+    width = my_map.info.width
 
     y = (int)(index1d/ width)
     x = index1d - (y * width)
