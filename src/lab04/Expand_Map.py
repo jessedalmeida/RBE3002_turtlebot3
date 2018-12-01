@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 import sys
+sys.path.insert(0, '/home/jfdalmeida/catkin_ws/src/RBE3002Code19/src/lab03')
 import rospy
 import math
-from src.lab03 import map_helper
+import map_helper
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
@@ -57,18 +58,32 @@ class Expand_Map:
     pass
 
     def map_callback(self, msg):
+        # type: (OccupancyGrid) -> None
         """
             This is a callback for the /map topic
             :param msg: map
             :return: None
         """
-        expanded_map = self.expand(msg)
-        occo_map = OccupancyGrid()
-        occo_map.header = msg.header
-        occo_map.data = expanded_map
-        occo_map.info = msg.info
-        self.expanded_map = occo_map
-        self.map_pub.publish(occo_map)
+
+        rospy.logdebug("Getting map")
+        self.map = msg
+
+        # Show map details for debugging
+        rospy.logdebug("Resolution is: %s" % msg.info.resolution)
+        x_index_offset = self.map.info.origin.position.x
+        y_index_offset = self.map.info.origin.position.y
+        rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
+
+        width = self.map.info.width
+        height = self.map.info.height
+        rospy.logdebug("Map Width: %s Height: %s" % (width, height))
+        # expanded_map = self.expand(msg)
+        # occo_map = OccupancyGrid()
+        # occo_map.header = msg.header
+        # occo_map.data = expanded_map
+        # occo_map.info = msg.info
+        # self.expanded_map = occo_map
+        # self.map_pub.publish(occo_map)
 
 
     def handle_map(self, req):
@@ -79,40 +94,43 @@ class Expand_Map:
 
 
 
-    def expand(self,my_map):
+    def expand(self, my_map):
         #type: (OccupancyGrid) -> None
         """
             Expand the map and return it
             :param my_map: map
             :return: map
         """
+        rospy.logdebug("Expanding the map")
+
         grid = GridCells()
         grid.header.frame_id = "/odom"
         grid.cell_height = my_map.info.resolution
         grid.cell_width = my_map.info.resolution
-        grid.cells = []
+        cells_to_paint = []
 
         expanded_map = my_map
         occupied = 100
 
         #iterate through all
         cells = my_map.data
-        for i, cell in enumerate(cells):
-
+        for i in range(len(cells)):
+            occupation = cells[i]
             # if occupied
-            if cell > 0:
+            if occupation > 0:
                 point = map_helper.index1d_to_index2d(i, self.map)
 
-                grid.cells.append(map_helper.map_to_world(point, self.map))
+                # rospy.logdebug("Index %s Occupation %s Point %s" %(i, occupation, point))
+                cells_to_paint.append(map_helper.index2d_to_world(point, self.map))
 
                 neighbors = map_helper.get_neighbors(point, self.map)
 
                 # iterate through neighbors
                 for n in neighbors:
                     index_of_n = map_helper.index2d_to_index1d(n, self.map)
-                    expanded_map.data[index_of_n] = occupied
+                    expanded_map.data[index_of_n]
 
-                    grid.cells.append(map_helper.map_to_world(n, self.map))
+                    cells_to_paint.append(map_helper.index2d_to_world(n, self.map))
 
                 if self.map.info.resolution < .1:
                     # iterate through neighbors of neighbors
@@ -120,6 +138,14 @@ class Expand_Map:
 
             else:
                 continue
+
+        for c in cells_to_paint:
+            p = Point()
+            p.x = c[0]
+            p.y = c[1]
+
+            grid.cells.append(p)
+
 
         self.pub_expanded_grid.publish(grid)
 
@@ -130,5 +156,14 @@ class Expand_Map:
         self.expand(self.map)
 
 if __name__ == '__main__':
-    expand = Expand_Map()
+    expanded = Expand_Map()
+    rate = rospy.Rate(1)
+
+    while not rospy.is_shutdown():
+        expanded.expand(expanded.map)
+        rate.sleep()
+
+    rospy.spin()
+
+
     rospy.loginfo("Expanding the Map")
