@@ -43,7 +43,7 @@ class Expand_Map:
         self.rate = rospy.Rate(.5)
 
         # Conts
-        self.robot_radius = .5
+        self.robot_radius = .1
 
         while self.map is None and not rospy.is_shutdown():
             pass
@@ -81,8 +81,8 @@ class Expand_Map:
             Service call to get map and expand it
             :return:
         """
-        # self.get_map()
-        return self.map
+        self.get_map()
+        return self.expanded_map
 
     def expand(self, my_map):
         #type: (OccupancyGrid) -> None
@@ -98,19 +98,13 @@ class Expand_Map:
         self.expanded_map = copy.copy(my_map)
         self.new_occupancy = list(self.expanded_map.data)
 
-
-        #iterate through all
+        # iterate through all
         cells = my_map.data
-        rospy.logdebug(len(cells))
         for i in range(len(cells)):
-            # rospy.logdebug("Current index: %s" %i)
-            point = map_helper.index1d_to_index2d(i, self.map)
-
             # paint around radius of a point of wall
             if cells[i] == 100:
+                point = map_helper.index1d_to_index2d(i, self.map)
                 self.puff_point(point)
-
-        # rospy.logdebug("Painted: %s" % self.cells_to_paint)
         grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
         self.pub_expanded_grid.publish(grid)
 
