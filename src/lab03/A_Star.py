@@ -28,9 +28,6 @@ class A_Star:
         self.point_pub = rospy.Publisher("/point_cell", GridCells, queue_size=10)
         self.wavefront_pub = rospy.Publisher("local_costmap/wavefront", GridCells, queue_size=10)
 
-        # Setup Map Subscriber
-        rospy.Subscriber("map", OccupancyGrid, self.dynamic_map_client)
-
         # Setup service server
         rospy.Service('make_path', MakePath, self.handle_a_star)
 
@@ -59,22 +56,26 @@ class A_Star:
         # Read inputs
         start = req.start
         goal = req.goal
-        # Generate map
-        self.paint_point(start, goal)
-        # Path from list of points
-        path = self.publish_path(self.points)
-
-        # Path until horizon
-        horiz_path = self.horizon_path(path)
+        self.create_map(req.map)
+        try:
+          self.paint_point(start, goal)
+          # Path from list of points
+          path = self.publish_path(self.points)
+          # Path until horizon
+          horiz_path = self.horizon_path(path)
+          success = True
+        except:
+            path = Path()
+            horiz_path = Path()
+            success = False
 
         # Return path and horizon path in service call
-        return path, horiz_path
+        return path, horiz_path, success
 
-    def dynamic_map_client(self, new_map):
+    def create_map(self, new_map):
 
         """
-            Service call to get map and set class variables
-            This can be changed to call the expanded map
+            Get map and set class variables
             :return:
         """
         rospy.logdebug("Getting map")
