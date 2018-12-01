@@ -3,10 +3,12 @@ import rospy
 from nav_msgs.msg import OccupancyGrid, GridCells, Path, Odometry
 from nav_msgs.srv import GetMap
 from geometry_msgs.msg import PointStamped, Pose, PoseStamped, Point
-import map_helper
 import sys
-sys.path.insert(map_helper)
-from PriorityQueue import PriorityQueue
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lab03'))
+print(sys.path)
+import map_helper
+import heapq
 import math
 from rbe3002.srv import FrontierRequest
 import tf
@@ -25,9 +27,10 @@ class FrontierFinder:
 
         # Setup Map Publishers
         self.map_frontier_pub = rospy.Publisher("local_costmap/MapFrontier", GridCells, queue_size=10)
+        self.map_frontier_group_pub = rospy.Publisher("local_costmap/MapFrontierGroups", GridCells, queue_size=10)
 
         # Initialize variables
-        self.pose = None
+        self.position = None
         self.map = None
 
         # Setup service proxy
@@ -46,33 +49,46 @@ class FrontierFinder:
         :param req: request
         :return: map, list of frontiers
         """
-        self.map = self.get_map()
-        rospy.log(req)
+        # Get map
+        occupancy_grid = self.get_map()
+        self.map = occupancy_grid.map
+        rospy.logdebug(self.map.info)
 
-    def get_center(self, points):
+        # Find frontier points
+        frontier_points = self.find_frontier_points()
+
+        # Publish frontier points
+        frontier_cells = map_helper.to_grid_cells(frontier_points.keys(), self.map, True)
+        self.map_frontier_pub.publish(frontier_cells)
+
+        # Group points
+        frontiers = self.group_frontiers(frontier_points)
+
+        # Display closest points
+        frontier_group_cells = map_helper.to_grid_cells(frontiers, self.map, True)
+        self.map_frontier_group_pub.publish(frontier_group_cells)
+        rospy.logdebug(frontiers)
+        return occupancy_grid, frontiers
+
+    def get_closest(self, points):
         """
-        Finds the point closest to the centroid
+        Finds the point closest to the robot
         :param points: list of tuples
         :return: point closest to centroid
         """
-        # Find center
-        sum_x, sum_y = 0
-        for point in points:
-            sum_x += point[0]
-            sum_y += point[1]
-        center = (sum_x / len(points), sum_y / len(points))
+        robot = self.position
 
         # Guess closest
-        shortest_distance = map_helper.euclidean_distance(points[0], center)
+        shortest_distance = map_helper.euclidean_distance(points[0], robot)
         closest = points[0]
 
         # Find closest
         for point in points:
-            dist = map_helper.euclidean_distance(point, center)
+            dist = map_helper.euclidean_distance(point, robot)
             if dist < shortest_distance:
                 shortest_distance = dist
                 closest = point
-        return closest
+        return shortest_distance, closest
 
     def odom_callback(self, msg):
         # type: (Odometry) -> None
@@ -84,7 +100,9 @@ class FrontierFinder:
         position = msg.pose.pose.position
         new_pose = PoseStamped()
         new_pose.pose.position = position
-        self.pose = new_pose
+        coords = (position.x, position.y)
+        if self.map:
+            self.position = map_helper.world_to_index2d(coords, self.map)
 
     def find_frontier_points(self):
         """
@@ -93,12 +111,12 @@ class FrontierFinder:
         """
         frontier = {}
 
-        cells = self.map
+        cells = self.map.data
         for i, cell in enumerate(cells):
             # if occupied
             if cell == 0:
                 point = map_helper.index1d_to_index2d(i, self.map)
-                if map_helper.get_neighbors(point, cells, -1):  # Checks if there are unknown neighbors
+                if map_helper.get_neighbors(point, self.map, -1):  # Checks if there are unknown neighbors
                     frontier[point] = [point]
 
         return frontier
@@ -132,7 +150,8 @@ class FrontierFinder:
         group += [cell]
 
         # Remove from frontier of ungrouped cells
-        del frontier_cells[cell]
+        if cell in frontier_cells:
+            del frontier_cells[cell]
 
         # Recursively check neighbors
         for neighbor in self.get_neighborhood(frontier_cells, cell):
@@ -142,12 +161,20 @@ class FrontierFinder:
         """
         Merges nearby points into single frontiers
         :param frontier_cells: dictionary of cells
-        :return: dictionary of combined frontiers
+        :return: sorted list of the closest point in each frontier
         """
-        frontiers = {}
+        heap = []
         while len(frontier_cells):
             cell, group = frontier_cells.popitem()
             self.group_cells(frontier_cells, group, cell)
-            frontiers[self.get_center(group)] = group
-        return frontiers
+            heapq.heappush(heap, self.get_closest(group))
+        return [heapq.heappop(heap)[1] for i in range(len(heap))]
 
+
+if __name__ == '__main__':
+    finder = FrontierFinder()
+    rate = rospy.Rate(3000)
+    while not rospy.is_shutdown():
+        finder.handle_get_frontier(None)
+        rate.sleep()
+    rospy.spin()

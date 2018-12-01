@@ -1,13 +1,13 @@
 #!/usr/bin/env python
 import sys
-sys.path.insert(0, '/home/jfdalmeida/catkin_ws/src/RBE3002Code19/src/lab03')
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lab03'))
 import rospy
 import math
 import map_helper
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
-
 
 
 class Expand_Map:
@@ -32,7 +32,7 @@ class Expand_Map:
         # Horizon Path
 
         # Service Calls
-        self.dynamic_map = rospy.ServiceProxy('dynamic_map', GetMap)
+        # self.dynamic_map = rospy.ServiceProxy('dynamic_map', GetMap)
         # Full Path
         # Horizon Path
 
@@ -85,14 +85,13 @@ class Expand_Map:
         # self.expanded_map = occo_map
         # self.map_pub.publish(occo_map)
 
-
     def handle_map(self, req):
         """
             Service call to get map and expand it
             :return:
         """
-
-
+        self.get_map()
+        return self.map
 
     def expand(self, my_map):
         #type: (OccupancyGrid) -> None
@@ -146,22 +145,22 @@ class Expand_Map:
 
             grid.cells.append(p)
 
-
         self.pub_expanded_grid.publish(grid)
 
         pass
 
     def get_map(self):
-        self.map = self.dynamic_map()
+        # self.map = self.dynamic_map()
         self.expand(self.map)
+
 
 if __name__ == '__main__':
     expanded = Expand_Map()
     rate = rospy.Rate(1)
 
-    while not rospy.is_shutdown():
-        expanded.expand(expanded.map)
-        rate.sleep()
+    # while not rospy.is_shutdown():
+    #     expanded.expand(expanded.map)
+    #     rate.sleep()
 
     rospy.spin()
 
