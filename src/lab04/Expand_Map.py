@@ -107,7 +107,7 @@ class Expand_Map:
                 self.puff_point(point)
 
         # rospy.logdebug("Painted: %s" % self.cells_to_paint)
-        grid = map_helper.to_grid_cells(self.cells_to_paint, self.map)
+        grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
         self.pub_expanded_grid.publish(grid)
 
         self.expanded_map.data = tuple(self.new_occupancy)
@@ -141,7 +141,14 @@ class Expand_Map:
                 self.cells_to_paint.append(worldpt)
                 visit = visit + map_helper.get_neighbors(n, self.map)
 
-    def get_map(self):
+    def remove_duplicates(self, list):
+        final_list = []
+        for point in list:
+            if point not in final_list:
+                final_list.append(point)
+        return final_list
+
+def get_map(self):
         # self.map = self.dynamic_map()
         # self.expand(self.map)
         pass
