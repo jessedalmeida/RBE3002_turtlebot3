@@ -6,7 +6,6 @@ from geometry_msgs.msg import PointStamped, Pose, PoseStamped, Point
 import sys
 import os
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lab03'))
-print(sys.path)
 import map_helper
 import heapq
 import math
@@ -68,7 +67,9 @@ class FrontierFinder:
         frontier_group_cells = map_helper.to_grid_cells(frontiers, self.map, True)
         self.map_frontier_group_pub.publish(frontier_group_cells)
         rospy.logdebug(frontiers)
-        return occupancy_grid, frontiers
+
+        frontier_poses = [map_helper.index2d_to_pose(cell, self.map) for cell in frontiers]
+        return occupancy_grid, frontier_poses
 
     def get_closest(self, points):
         """

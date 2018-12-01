@@ -100,6 +100,22 @@ def index2d_to_world(index2d, my_map):
     return x_point, y_point
 
 
+def index2d_to_pose(index2d, my_map):
+    """
+    Generate a PoseStamped from point indicies
+    :param index2d: tuple in 2d grid coordinates
+    :param my_map: map
+    :return: PoseStamped in world coordinates
+    """
+    world_point = index2d_to_world(index2d, my_map)
+    pose = PoseStamped()
+    pose.header.stamp = rospy.Time.now()
+    pose.header.frame_id = "map"
+    pose.pose.position.x = world_point[0]
+    pose.pose.position.y = world_point[1]
+    return pose
+
+
 def euclidean_distance(point1, point2):
     """
         calculate the dist between two points
