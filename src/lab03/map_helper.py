@@ -178,7 +178,7 @@ def to_grid_cells(cells_to_paint, my_map, to_world=False):
     grid.cell_width = my_map.info.resolution
 
     grid.cells = []
-    # Fill in points
+
     for index2d in cells_to_paint:
         if to_world:
             index2d = index2d_to_world(index2d, my_map)
@@ -199,6 +199,6 @@ def index1d_to_index2d(index1d, my_map):
 
 
 def index2d_to_index1d(index2d, my_map):
-    return index2d[1] * my_map.info.width + index2d[0]
+    return int(index2d[1] * my_map.info.width + index2d[0])
 
 
