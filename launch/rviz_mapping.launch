@@ -14,7 +14,7 @@
     <param name="publish_frequency" type="double" value="50.0" />
   </node>
 
-  <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="0 0 0 0 0 0 1 odom map 1000"/>
+  <node pkg="tf" type="static_transform_publisher" name="map_to_odom" args="1.5 0 0 0 0 0 1 odom map 1000"/>
 
   <node name="rviz" pkg="rviz" type="rviz" args="-d $(find rbe3002)/config/default.rviz"/>
 

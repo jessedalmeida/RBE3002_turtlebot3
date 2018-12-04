@@ -51,7 +51,6 @@ class FrontierFinder:
         # Get map
         occupancy_grid = self.get_map()
         self.map = occupancy_grid.map
-        rospy.logdebug(self.map.info)
 
         # Find frontier points
         frontier_points = self.find_frontier_points()
@@ -68,6 +67,8 @@ class FrontierFinder:
         self.map_frontier_group_pub.publish(frontier_group_cells)
 
         frontier_poses = [map_helper.index2d_to_pose(cell, self.map) for cell in frontiers]
+
+        rospy.logdebug("Finished frontier search")
 
         return occupancy_grid.map, frontier_poses
 
