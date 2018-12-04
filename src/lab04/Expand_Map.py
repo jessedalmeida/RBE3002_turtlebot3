@@ -5,14 +5,13 @@ sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lab03'))
 import rospy
 import math
 import map_helper
+import copy
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
 
 
 class Expand_Map:
-
-    robot_radius = .1
 
     def __init__(self):
         """
@@ -43,19 +42,11 @@ class Expand_Map:
 
         self.rate = rospy.Rate(.5)
 
+        # Conts
+        self.robot_radius = .1
+
         while self.map is None and not rospy.is_shutdown():
             pass
-
-    def euclidean_distance(self, point1, point2):
-        """
-            calculate the dist between two points
-            :param point1: tuple of location
-            :param point2: tuple of location
-            :return: dist between two points
-        """
-        #Pythagorian theorem
-        return math.sqrt((point1[0] - point2[0])**2 + (point1[1] - point2[1])**2)
-    pass
 
     def map_callback(self, msg):
         # type: (OccupancyGrid) -> None
@@ -91,7 +82,7 @@ class Expand_Map:
             :return:
         """
         self.get_map()
-        return self.map
+        return self.expanded_map
 
     def expand(self, my_map):
         #type: (OccupancyGrid) -> None
@@ -102,61 +93,68 @@ class Expand_Map:
         """
         rospy.logdebug("Expanding the map")
 
-        grid = GridCells()
-        grid.header.frame_id = "/odom"
-        grid.cell_height = my_map.info.resolution
-        grid.cell_width = my_map.info.resolution
-        cells_to_paint = []
+        self.cells_to_paint = []
 
-        expanded_map = my_map
-        occupied = 100
+        self.expanded_map = copy.copy(my_map)
+        self.new_occupancy = list(self.expanded_map.data)
 
-        #iterate through all
+        # iterate through all
         cells = my_map.data
         for i in range(len(cells)):
-            occupation = cells[i]
-            # if occupied
-            if occupation > 0:
+            # paint around radius of a point of wall
+            if cells[i] == 100:
                 point = map_helper.index1d_to_index2d(i, self.map)
-
-                # rospy.logdebug("Index %s Occupation %s Point %s" %(i, occupation, point))
-                cells_to_paint.append(map_helper.index2d_to_world(point, self.map))
-
-                neighbors = map_helper.get_neighbors(point, self.map)
-
-                # iterate through neighbors
-                for n in neighbors:
-                    index_of_n = map_helper.index2d_to_index1d(n, self.map)
-                    expanded_map.data[index_of_n]
-
-                    cells_to_paint.append(map_helper.index2d_to_world(n, self.map))
-
-                if self.map.info.resolution < .1:
-                    # iterate through neighbors of neighbors
-                    pass
-
-            else:
-                continue
-
-        for c in cells_to_paint:
-            p = Point()
-            p.x = c[0]
-            p.y = c[1]
-
-            grid.cells.append(p)
-
+                self.puff_point(point)
+        grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
         self.pub_expanded_grid.publish(grid)
 
-        pass
+        self.expanded_map.data = tuple(self.new_occupancy)
+        rospy.logdebug("Expansion complete")
+
+    def puff_point(self, point):
+        """
+        Looks at all neighbors in radius of a point and, if unoccupied, makes them occupied
+        :param point: tuple of index2d
+        :return:
+        """
+        # rospy.logdebug("Puffing point")
+
+        radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
+        steps_out = 0
+
+        visit = map_helper.get_neighbors(point, self.map)
+
+        while steps_out < radius and not rospy.is_shutdown():
+            # rospy.logdebug("Current r step: %s Visited: %s" % (steps_out, visit))
+            neighbors_to_expand = visit
+            visit = []
+
+            steps_out += 1
+
+            for n in neighbors_to_expand:
+                index_of_n = map_helper.index2d_to_index1d(n, self.map)
+
+                self.new_occupancy[index_of_n] = 100
+                worldpt = map_helper.index2d_to_world(n, self.map)
+                self.cells_to_paint.append(worldpt)
+                visit = visit + map_helper.get_neighbors(n, self.map)
+
+    def remove_duplicates(self, list):
+        final_list = []
+        for point in list:
+            if point not in final_list:
+                final_list.append(point)
+        return final_list
 
     def get_map(self):
         # self.map = self.dynamic_map()
         self.expand(self.map)
+        pass
 
 
 if __name__ == '__main__':
     expanded = Expand_Map()
-    rate = rospy.Rate(1)
+    # rate = rospy.Rate(1)
 
     # while not rospy.is_shutdown():
     #     expanded.expand(expanded.map)
