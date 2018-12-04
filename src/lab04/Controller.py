@@ -62,7 +62,7 @@ class Controller:
             done_exploring = True
         else:
             poses = path_response.horiz_path.poses
-            for pose in poses[1:-1]:
+            for pose in poses[0:-1]:
                 if not self.robot_nav(pose, True):
                     rospy.logwarn("Robot navigation failed")
                     return

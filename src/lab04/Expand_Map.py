@@ -154,7 +154,7 @@ class Expand_Map:
 
 if __name__ == '__main__':
     expanded = Expand_Map()
-    rate = rospy.Rate(1)
+    # rate = rospy.Rate(1)
 
     # while not rospy.is_shutdown():
     #     expanded.expand(expanded.map)

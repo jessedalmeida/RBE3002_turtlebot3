@@ -174,8 +174,8 @@ class FrontierFinder:
 
 if __name__ == '__main__':
     finder = FrontierFinder()
-    rate = rospy.Rate(3000)
-    while not rospy.is_shutdown():
-        finder.handle_get_frontier(None)
-        rate.sleep()
+    # rate = rospy.Rate(3000)
+    # while not rospy.is_shutdown():
+    #     finder.handle_get_frontier(None)
+    #     rate.sleep()
     rospy.spin()
