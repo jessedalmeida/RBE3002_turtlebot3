@@ -42,7 +42,7 @@ class FrontierFinder:
         rospy.Service('get_frontiers', FrontierRequest, self.handle_get_frontier)
 
     def handle_get_frontier(self, req):
-        # type: (None) -> (OccupancyGrid, PoseStamped)
+        # type: (None) -> (OccupancyGrid, list)
         """
         handles the service call request for a frontier
         :param req: request
@@ -66,10 +66,10 @@ class FrontierFinder:
         # Display closest points
         frontier_group_cells = map_helper.to_grid_cells(frontiers, self.map, True)
         self.map_frontier_group_pub.publish(frontier_group_cells)
-        rospy.logdebug(frontiers)
 
         frontier_poses = [map_helper.index2d_to_pose(cell, self.map) for cell in frontiers]
-        return occupancy_grid, frontier_poses[0]
+
+        return occupancy_grid.map, frontier_poses
 
     def get_closest(self, points):
         """
@@ -174,8 +174,8 @@ class FrontierFinder:
 
 if __name__ == '__main__':
     finder = FrontierFinder()
-    rate = rospy.Rate(3000)
-    while not rospy.is_shutdown():
-        finder.handle_get_frontier(None)
-        rate.sleep()
+    # rate = rospy.Rate(3000)
+    # while not rospy.is_shutdown():
+    #     finder.handle_get_frontier(None)
+    #     rate.sleep()
     rospy.spin()

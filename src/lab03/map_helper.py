@@ -112,6 +112,7 @@ def index2d_to_pose(index2d, my_map):
     pose.header.frame_id = "/map"
     pose.pose.position.x = world_point[0]
     pose.pose.position.y = world_point[1]
+    pose.pose.orientation.w = 1
     return pose
 
 

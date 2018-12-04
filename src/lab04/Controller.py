@@ -14,7 +14,7 @@ class Controller:
         """
 
         # Initialize node
-        rospy.init_node('controller', log_level=rospy.DEBUG)
+        rospy.init_node('controller', log_level=rospy.WARN)
 
         # Subscribers
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
@@ -50,7 +50,7 @@ class Controller:
             rospy.logwarn("No known pose!")
             return
 
-        frontier_request_response= self.frontier_request()
+        frontier_request_response = self.frontier_request()
         map = frontier_request_response.map
         frontiers = frontier_request_response.frontiers
 
@@ -77,9 +77,7 @@ if __name__ == '__main__':
 
     rospy.loginfo("Initializing Controller")
 
-    while not rospy.is_shutdown():
-        while(not controller.explore()):
-            pass
+    while not rospy.is_shutdown() and not controller.explore():
+        pass
 
     rospy.spin()
-    pass
