@@ -109,8 +109,7 @@ def index2d_to_pose(index2d, my_map):
     """
     world_point = index2d_to_world(index2d, my_map)
     pose = PoseStamped()
-    pose.header.stamp = rospy.Time.now()
-    pose.header.frame_id = "map"
+    pose.header.frame_id = "/map"
     pose.pose.position.x = world_point[0]
     pose.pose.position.y = world_point[1]
     return pose
