@@ -1,0 +1,15 @@
+<launch>
+	<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_empty_world.launch" />
+	<include file="$(find rbe3002)/launch/rviz_mapping.launch" />
+
+    <node name="expand_map" pkg="rbe3002" type="Expand_Map.py" />
+
+    <node name="frontier_finder" pkg="rbe3002" type="Frontier_Finder.py" />
+
+    <node name="a_star" pkg="rbe3002" type="A_Star.py" />
+
+    <node name="robot_nav" pkg="rbe3002" type="Robot.py" />
+
+    <node name="has_been_described_as_the_Beyonce_of_nodes" pkg="rbe3002" type="Controller.py" />
+
+</launch>
