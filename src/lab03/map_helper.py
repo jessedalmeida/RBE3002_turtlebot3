@@ -59,6 +59,7 @@ def is_valid_index2d(index2d, my_map, occupation=0):
         return False
 
     cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
+    print(cell_val)
     if cell_val == occupation:
         return True
     else:

@@ -57,6 +57,8 @@ class A_Star:
         start = req.start
         goal = req.goal
         self.create_map(req.map)
+        rospy.logdebug("Start: %s" % start)
+        rospy.logdebug("Goal: %s" % goal)
         try:
           self.paint_point(start, goal)
           # Path from list of points
@@ -64,7 +66,9 @@ class A_Star:
           # Path until horizon
           horiz_path = self.horizon_path(path)
           success = True
-        except:
+        except Exception as e:
+            rospy.logdebug("Failed to find path")
+            rospy.logdebug(e)
             path = Path()
             horiz_path = Path()
             success = False
@@ -158,6 +162,7 @@ class A_Star:
                 break
 
             # Add neighbors to frontier
+            rospy.logdebug("Neighbors: %s" % map_helper.get_neighbors(current, self.map))
             for next in map_helper.get_neighbors(current, self.map):
                 rospy.logdebug("Next node %s" % (next,))
 
