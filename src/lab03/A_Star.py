@@ -356,7 +356,7 @@ class A_Star:
 
     def draw_circle(self):
         obstacles = [(math.cos(i/3.0), math.sin(i/3.0)) for i in range(0, 20)]
-        rospy.logdebug(obstacles)
+        # rospy.logdebug(obstacles)
         cells = map_helper.to_grid_cells(obstacles, self.map)
         self.waypoints_pub.publish(cells)
 

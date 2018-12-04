@@ -14,7 +14,7 @@ class Controller:
         """
 
         # Initialize node
-        rospy.init_node('controller', log_level=rospy.WARN)
+        rospy.init_node('controller', log_level=rospy.DEBUG)
 
         # Subscribers
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
@@ -43,32 +43,39 @@ class Controller:
         self.pose = new_pose
 
     def explore(self):
-
+        path_found = False
         done_exploring = False
         
         if self.pose is None:
             rospy.logwarn("No known pose!")
             return
 
-        # frontier_request_response = self.frontier_request()
-        # map = frontier_request_response.map
-        # frontiers = frontier_request_response.frontiers
+        frontier_request_response = self.frontier_request()
+        map = frontier_request_response.map
+        frontiers = frontier_request_response.frontiers
 
-        # for frontier in frontiers:
-        #     path_response = self.make_path(self.pose, frontier, map)
-        #     if path_response.success:
-        #         break
-        # if not path_response.success:
-        #     done_exploring = True
-        # else:
-        #     poses = path_response.horiz_path.poses
-        #     for pose in poses[0:-1]:
-        #         if not self.robot_nav(pose, True):
-        #             rospy.logwarn("Robot navigation failed")
-        #             return
-        #         rospy.logdebug("At point %s" % self.pose)
-        #     self.robot_nav(poses[-1], False)
+        for frontier in frontiers:
+            path_response = self.make_path(self.pose, frontier, map)
+            rospy.logdebug("Response: %s" % path_response )
+            if path_response.success:
+                path_found = True
+                rospy.logdebug("Successful, going to path %s" % path_response.horiz_path.poses)
+                break
 
+        if not path_found:
+            done_exploring = True
+        else:
+            rospy.logdebug("Trying to go to a frontier")
+            poses = path_response.horiz_path.poses
+            for pose in poses[0:-1]:
+                if not self.robot_nav(pose, True):
+                    rospy.logwarn("Robot navigation failed")
+                    return
+                rospy.logdebug("At point %s" % self.pose)
+            self.robot_nav(poses[-1], False)
+
+        if done_exploring:
+            rospy.loginfo("Done Exploring")
         return done_exploring
 
 

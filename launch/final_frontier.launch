@@ -10,6 +10,8 @@
 
     <node name="robot_nav" pkg="rbe3002" type="Robot.py" />
 
+    <!--
     <node name="has_been_described_as_the_Beyonce_of_nodes" pkg="rbe3002" type="Controller.py" />
+    -->
 
 </launch>
