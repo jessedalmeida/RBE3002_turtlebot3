@@ -61,9 +61,9 @@ class A_Star:
         rospy.logdebug("Goal: %s" % goal)
         try:
           self.paint_point(start, goal)
-          # Path from list of points
+          Path from list of points
           path = self.publish_path(self.points)
-          # Path until horizon
+          Path until horizon
           horiz_path = self.horizon_path(path)
           success = True
         except Exception as e:

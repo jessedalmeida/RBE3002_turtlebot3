@@ -3,5 +3,7 @@
 	<node pkg="gmapping" name="slam_gmapping" type="slam_gmapping">
 	    <param name="scan" value="scan"/>
 	</node>
+
 	<include file="$(find rbe3002)/launch/rviz_mapping.launch" />
+
 </launch>
