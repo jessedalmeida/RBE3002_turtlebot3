@@ -77,7 +77,7 @@ class Controller:
                     rospy.logwarn("Robot navigation failed")
                     return
                 rospy.logdebug("At point %s" % self.pose)
-            self.robot_nav(poses[-1], False)
+            self.robot_nav(path_poses[-1], False)
 
         if done_exploring:
             rospy.loginfo("Done Exploring")

@@ -60,12 +60,12 @@ class A_Star:
         rospy.logdebug("Start: %s" % start)
         rospy.logdebug("Goal: %s" % goal)
         try:
-          self.paint_point(start, goal)
-          # Path from list of points
-          path = self.publish_path(self.points)
-          # Path until horizon
-          horiz_path = self.horizon_path(path)
-          success = True
+            self.paint_point(start, goal)
+            # Path from list of points
+            path = self.publish_path(self.points)
+            # Path until horizon
+            horiz_path = self.horizon_path(path)
+            success = True
         except Exception as e:
             rospy.logdebug("Failed to find path")
             rospy.logdebug(e)
@@ -155,7 +155,7 @@ class A_Star:
         while not frontier.empty():
             # Pop best cell from frontier
             current = frontier.get()
-            rospy.logdebug("Current Node %s " % (current, ))
+            # rospy.logdebug("Current Node %s " % (current, ))
 
             # Done!
             if current == goal:
@@ -164,7 +164,7 @@ class A_Star:
             # Add neighbors to frontier
             rospy.logdebug("Neighbors: %s" % map_helper.get_neighbors(current, self.map))
             for next in map_helper.get_neighbors(current, self.map):
-                rospy.logdebug("Next node %s" % (next,))
+                # rospy.logdebug("Next node %s" % (next,))
 
                 # Find cost
                 new_cost = cost_so_far[current] + self.move_cost(current, next)
@@ -230,6 +230,17 @@ class A_Star:
         """
         return abs(current[0] - next[0]) + abs(current[1] - next[1])
 
+    def pose_distance(self, current, next):
+        """
+        Calculate distance between two poses
+        :param current: PoseStamped of first pose
+        :param next: PoseStamped of second pose
+        :return: straight line distance
+        """
+        point1 = (current.pose.position.x, current.pose.position.y)
+        point2 = (next.pose.position.x, next.pose.position.y)
+        return map_helper.euclidean_distance(point1, point2)
+
     def reconstruct_path(self, start, goal, came_from):
         """
             Rebuild the path from a dictionary
@@ -238,8 +249,7 @@ class A_Star:
             :param came_from: dictionary of tuples
             :return: list of tuples
        """
-
-    pass
+        pass
 
     def optimize_path(self, path):
         """
@@ -312,22 +322,21 @@ class A_Star:
         :param path: Path()
         :return: Path()
         """
-
         horizon_dist = 0.5
         traveled_dist = 0
         horizon_path = Path()
         horizon_path.header.frame_id = "/odom"
-        horizon_path += path.poses[0]
+        horizon_path.poses.append(path.poses[0])
 
-        for idx in range(len(path)):
-            dist = self.straight_line_dist(path.poses[idx].position, path.poses[idx+1].position)
+        for idx in range(len(path.poses)-1):
+            dist = self.pose_distance(path.poses[idx], path.poses[idx+1])
             traveled_dist += dist
-            if(traveled_dist < horizon_dist):
-                horizon_path.poses += path.poses[idx+1]
+            if traveled_dist < horizon_dist:
+                horizon_path.poses.append(path.poses[idx+1])
             else:
                 remaining_dist = horizon_dist - traveled_dist
                 horizon_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
-                horizon_path.poses += horizon_pose
+                horizon_path.poses.append(horizon_pose)
                 break
 
         return horizon_path
