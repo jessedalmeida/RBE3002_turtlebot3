@@ -44,6 +44,29 @@ def get_neighbors(index2d, my_map, occupation=0):
     return list_of_neighbors
 
 
+def get_neighbors_8count(index2d, my_map, occupation=0):
+    """
+        returns the legal neighbors in 8count of index2d
+        :param index2d: tuple of index in 2d grid cells
+        :param my_map: 1d map array
+        :param occupation: only returns if occupation matches the cell contents
+        :return: list of tuples
+    """
+
+    list_of_neighbors = []
+
+    x_index = index2d[0]
+    y_index = index2d[1]
+
+    for dx in range(-1,2):
+        for dy in range(-1,2):
+            if is_valid_index2d((x_index + dx, y_index + dy), my_map, occupation) and not (dx==0 and dy ==0):
+                neighbor_n = (x_index + dx, y_index + dy)
+                list_of_neighbors.append(neighbor_n)
+
+    return list_of_neighbors
+
+
 def is_valid_index2d(index2d, my_map, occupation=0):
     """
         Gets if a point is a legal location
