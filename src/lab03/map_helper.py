@@ -64,6 +64,39 @@ def get_neighbors_8count(index2d, my_map, occupation=0):
                 neighbor_n = (x_index + dx, y_index + dy)
                 list_of_neighbors.append(neighbor_n)
 
+    # if is_valid_index2d((x_index-1, y_index - 1), my_map, occupation):
+    #     neighbor_n = (x_index-1, y_index - 1)
+    #     list_of_neighbors.append(neighbor_n)
+    #
+    # if is_valid_index2d((x_index, y_index - 1), my_map, occupation):
+    #     neighbor_n = (x_index, y_index - 1)
+    #     list_of_neighbors.append(neighbor_n)
+    #
+    # if is_valid_index2d((x_index + 1, y_index-1), my_map, occupation):
+    #     neighbor_e = (x_index + 1, y_index-1)
+    #     list_of_neighbors.append(neighbor_e)
+    #
+    # if is_valid_index2d((x_index-1, y_index), my_map, occupation):
+    #     neighbor_s = (x_index-1, y_index)
+    #     list_of_neighbors.append(neighbor_s)
+    #
+    # if is_valid_index2d((x_index+1, y_index), my_map, occupation):
+    #     neighbor_w = (x_index+1, y_index)
+    #     list_of_neighbors.append(neighbor_w)
+    #
+    # if is_valid_index2d((x_index-1, y_index + 1), my_map, occupation):
+    #     neighbor_n = (x_index-1, y_index + 1)
+    #     list_of_neighbors.append(neighbor_n)
+    #
+    # if is_valid_index2d((x_index, y_index + 1), my_map, occupation):
+    #     neighbor_n = (x_index, y_index + 1)
+    #     list_of_neighbors.append(neighbor_n)
+    #
+    # if is_valid_index2d((x_index+1, y_index + 1), my_map, occupation):
+    #     neighbor_n = (x_index+1, y_index + 1)
+    #     list_of_neighbors.append(neighbor_n)
+
+
     return list_of_neighbors
 
 
