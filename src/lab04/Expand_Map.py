@@ -68,13 +68,6 @@ class Expand_Map:
         width = self.map.info.width
         height = self.map.info.height
         rospy.logdebug("Map Width: %s Height: %s" % (width, height))
-        # expanded_map = self.expand(msg)
-        # occo_map = OccupancyGrid()
-        # occo_map.header = msg.header
-        # occo_map.data = expanded_map
-        # occo_map.info = msg.info
-        # self.expanded_map = occo_map
-        # self.map_pub.publish(occo_map)
 
     def handle_map(self, req):
         """
@@ -119,7 +112,7 @@ class Expand_Map:
         """
         # rospy.logdebug("Puffing point")
 
-        radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
+        radius = 2 * int(math.ceil(self.robot_radius / self.map.info.resolution))
         steps_out = 0
 
         visit = map_helper.get_neighbors(point, self.map)
