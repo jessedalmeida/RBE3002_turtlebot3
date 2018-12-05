@@ -28,7 +28,10 @@ class Controller:
 
         self.pose = None
 
-        # self.explore()
+        rate = rospy.Rate(3000)
+        rate.sleep()
+        while not rospy.is_shutdown() and not self.explore():
+            pass
 
     def odom_callback(self, msg):
         # type: (Odometry) -> None
@@ -47,7 +50,7 @@ class Controller:
         done_exploring = False
         
         if self.pose is None:
-            rospy.logwarn("No known pose!")
+            rospy.loginfo("No known pose!")
             return
 
         frontier_request_response = self.frontier_request()
@@ -83,8 +86,9 @@ if __name__ == '__main__':
     controller = Controller()
 
     rospy.loginfo("Initializing Controller")
-
-    while not rospy.is_shutdown() and not controller.explore():
-        pass
+    # rate = rospy.Rate(1000)
+    # rate.sleep()
+    # while not rospy.is_shutdown() and not controller.explore():
+    #     pass
 
     rospy.spin()

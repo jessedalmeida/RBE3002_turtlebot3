@@ -103,7 +103,7 @@ class FrontierFinder:
         new_pose = PoseStamped()
         new_pose.pose.position = position
         coords = (position.x, position.y)
-        if self.map:
+        if self.map and self.map.info.resolution:
             self.position = map_helper.world_to_index2d(coords, self.map)
 
     def find_frontier_points(self):
