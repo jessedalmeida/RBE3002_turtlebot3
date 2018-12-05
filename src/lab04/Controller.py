@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import rospy
 from geometry_msgs.msg import PoseStamped
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
 from rbe3002.srv import MakePath, RobotNav, FrontierRequest
 
@@ -48,6 +48,7 @@ class Controller:
     def explore(self):
         path_found = False
         done_exploring = False
+        path_poses = Path().poses
         
         if self.pose is None:
             rospy.loginfo("No known pose!")
@@ -59,9 +60,11 @@ class Controller:
 
         for frontier in frontiers:
             path_response = self.make_path(self.pose, frontier, map)
-            rospy.logdebug("Response: %s" % path_response )
+            rospy.logdebug("Response: %s" % path_response)
+            rospy.logdebug("Successful path: %s" % path_response.success)
             if path_response.success:
                 path_found = True
+                path_poses = path_response.horiz_path.poses
                 rospy.logdebug("Successful, going to path %s" % path_response.horiz_path.poses)
                 break
 
@@ -69,8 +72,7 @@ class Controller:
             done_exploring = True
         else:
             rospy.logdebug("Trying to go to a frontier")
-            poses = path_response.horiz_path.poses
-            for pose in poses[0:-1]:
+            for pose in path_poses[0:-1]:
                 if not self.robot_nav(pose, True):
                     rospy.logwarn("Robot navigation failed")
                     return
