@@ -27,7 +27,7 @@ class Robot:
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         # Setup subscribers
         self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odom_callback)
-        self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_point)
+        # self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_point)
         # Setup service client
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
 
@@ -39,15 +39,10 @@ class Robot:
         """
         # type: (RobotNav) -> None
         rospy.logdebug(req)
-        goal = req.goal
-        ignore_orientation = req.ignoreOrientation
+        path = req.path
         # Determine if the orientation needs to be ignored
-        if (True or ignore_orientation):
-            self.nav_to_point(goal)
-            return True
-        else:
-            self.nav_to_pose(goal)
-            return True
+        self.nav_path(path)
+        return True
 
     def nav_to_pose(self, goal):
         # type: (PoseStamped) -> None
@@ -75,7 +70,7 @@ class Robot:
         self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
         self.rotate(-self.yaw + goalAng)
 
-    def nav_to_point_old(self, path):
+    def nav_to_point_old(self, goal):
         # type: (PoseStamped) -> None
         """
         :param goal: PoseStamped
@@ -92,7 +87,7 @@ class Robot:
             self.rotate(angToGoal)
             self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
 
-    def nav_to_point(self, goal):
+    def nav_toward_pose(self, goal):
         # type: (PoseStamped) -> None
         """
         :param goal: PoseStamped
@@ -101,44 +96,30 @@ class Robot:
         goalX = goal.pose.position.x
         goalY = goal.pose.position.y
 
-        distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
-
-        angToGoal = math.atan2(goalY - self.py, goalX - self.px)
-
-
-        # Set update rate
-        rate = rospy.Rate(10)
-
-        # Initial angle
-        yaw = self.yaw
-        start = yaw
-
-        dest_ang = self.bounded_angle(angToGoal)
-        rospy.loginfo("Turning setpoint: %f" % angToGoal)
-        rospy.loginfo("Dist linear: %f" % distToGoal)
-        turn_error = self.bounded_angle(dest_ang - yaw)
-
-        # Loop while not there yet
-        while not rospy.is_shutdown() and \
-                (abs(distToGoal) > .05):
-            cmd = Twist()
-            angToGoal = math.atan2(goalY - self.py, goalX - self.px)
-            distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
-            turn_error = self.bounded_angle(angToGoal - yaw)
-            drive_error = distToGoal * (abs(turn_error) < .2)
-            cmd.linear.x = min(.1, drive_error)
-            # Proportional + feed forward control
-            cmd.angular.z = turn_error * (.3 + .1/abs(turn_error))
-            self.pub.publish(cmd)
-            rospy.logdebug("Turn: Set %s at %s error %s" % (angToGoal, self.yaw, turn_error))
-            rospy.logdebug("Drive: Dist %s Error %s Cmd %s" % (distToGoal, drive_error, cmd.linear.x))
-            # Update position
-            yaw = self.yaw
-            rate.sleep()
-        # Stop robot
         cmd = Twist()
+        angToGoal = math.atan2(goalY - self.py, goalX - self.px)
+        distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
+        turn_error = self.bounded_angle(angToGoal - self.yaw)
+        drive_error = distToGoal * (abs(turn_error) < .2)
+        cmd.linear.x = min(.1, drive_error)
+        # Proportional + feed forward control
+        cmd.angular.z = turn_error * (.3 + .1/abs(turn_error))
         self.pub.publish(cmd)
-        rospy.loginfo("Done turning")
+        rospy.logdebug("Turn: Set %s at %s error %s" % (angToGoal, self.yaw, turn_error))
+        rospy.logdebug("Drive: Dist %s Error %s Cmd %s" % (distToGoal, drive_error, cmd.linear.x))
+
+        if rospy.is_shutdown() or abs(distToGoal) < .05:
+            cmd = Twist()
+            self.pub.publish(cmd)
+            rospy.loginfo("Done turning")
+            return 0
+        return distToGoal
+
+    def nav_path(self, path):
+        rate = rospy.Rate(10)
+        for pose in path.poses:
+            while self.nav_toward_pose(pose):
+                rate.sleep()
 
     def drive_straight(self, speed, distance):
         """

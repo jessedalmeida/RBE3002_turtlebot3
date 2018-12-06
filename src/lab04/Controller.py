@@ -72,12 +72,10 @@ class Controller:
             done_exploring = True
         else:
             rospy.logdebug("Trying to go to a frontier")
-            for pose in path_poses[0:-1]:
-                if not self.robot_nav(pose, True):
-                    rospy.logwarn("Robot navigation failed")
-                    return
-                rospy.logdebug("At point %s" % self.pose)
-            self.robot_nav(path_poses[-1], False)
+            if not self.robot_nav(path_response.horiz_path):
+                rospy.logwarn("Robot navigation failed")
+                return
+            rospy.logdebug("At point %s" % self.pose)
 
         if done_exploring:
             rospy.loginfo("Done Exploring")
