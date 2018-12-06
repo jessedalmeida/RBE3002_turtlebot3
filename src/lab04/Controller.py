@@ -15,7 +15,7 @@ class Controller:
         rospy.loginfo("Initializing Controller")
 
         # Initialize node
-        rospy.init_node('controller', log_level=rospy.DEBUG)
+        rospy.init_node('controller', log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
@@ -47,7 +47,7 @@ class Controller:
         self.pose = new_pose
 
     def explore(self):
-        rospy.loginfo("Exploring...")
+
         path_found = False
         done_exploring = False
         path_poses = Path().poses
@@ -56,6 +56,7 @@ class Controller:
             rospy.loginfo("No known pose!")
             return
 
+        rospy.loginfo("Expanding Map and Updating Frontiers")
         frontier_request_response = self.frontier_request()
         map = frontier_request_response.map
         frontiers = frontier_request_response.frontiers
@@ -73,7 +74,7 @@ class Controller:
         if not path_found:
             done_exploring = True
         else:
-            rospy.logdebug("Trying to go to a frontier")
+            rospy.loginfo("Navigating Path")
             for pose in path_poses[0:-1]:
                 if not self.robot_nav(pose, True):
                     rospy.logwarn("Robot navigation failed")

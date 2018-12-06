@@ -20,7 +20,7 @@ class Expand_Map:
         """
 
         # Initialize node
-        rospy.init_node("expand_map", log_level=rospy.DEBUG)
+        rospy.init_node("expand_map", log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
@@ -44,6 +44,9 @@ class Expand_Map:
 
         # Conts
         self.robot_radius = .1
+        self.first_run = True
+
+        self.cells_to_paint = []
 
         while self.map is None and not rospy.is_shutdown():
             pass
@@ -74,6 +77,7 @@ class Expand_Map:
             Service call to get map and expand it
             :return:
         """
+        rospy.loginfo("Expanding Map")
         self.get_map()
         return self.expanded_map
 
@@ -84,20 +88,28 @@ class Expand_Map:
             :param my_map: map
             :return: map
         """
-        rospy.logdebug("Expanding the map")
-
-        self.cells_to_paint = []
 
         self.expanded_map = copy.copy(my_map)
         self.new_occupancy = list(self.expanded_map.data)
+
+        self.cells_to_paint = []
+
+        if self.first_run:
+            self.already_expanded = [False] * len(self.new_occupancy)
 
         # iterate through all
         cells = my_map.data
         for i in range(len(cells)):
             # paint around radius of a point of wall
-            if cells[i] == 100:
+            if self.already_expanded[i]:
+                self.new_occupancy[i] == 100
+
+            if cells[i] == 100 and not self.already_expanded[i]:
+            # if cells[i] == 100:
+                self.already_expanded[i] = True
                 point = map_helper.index1d_to_index2d(i, self.map)
                 self.puff_point(point)
+
         grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
         self.pub_expanded_grid.publish(grid)
 

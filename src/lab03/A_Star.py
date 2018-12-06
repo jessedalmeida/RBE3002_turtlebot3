@@ -20,7 +20,7 @@ class A_Star:
             to show the frontier,closed and path.
         """
         # Initialize node
-        rospy.init_node("a_star", log_level=rospy.DEBUG)  # start node
+        rospy.init_node("a_star", log_level=rospy.INFO)  # start node
 
         #Setup Map Publishers
         self.waypoints_pub = rospy.Publisher("local_costmap/waypoints", GridCells, queue_size=10)
@@ -53,6 +53,8 @@ class A_Star:
             :param req: GetPlan
             :return: Path()
         """
+        rospy.loginfo("Generating Path")
+
         # Read inputs
         start = req.start
         goal = req.goal
@@ -67,7 +69,7 @@ class A_Star:
             horiz_path = self.horizon_path(path)
             success = True
         except Exception as e:
-            rospy.logdebug("Failed to find path")
+            rospy.logdewarn("Failed to find path")
             rospy.logdebug(e)
             path = Path()
             horiz_path = Path()
