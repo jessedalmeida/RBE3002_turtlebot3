@@ -12,6 +12,7 @@ class Controller:
         """
             This node explores frontiers until no frontiers remain
         """
+        rospy.loginfo("Initializing Controller")
 
         # Initialize node
         rospy.init_node('controller', log_level=rospy.DEBUG)
@@ -88,7 +89,6 @@ class Controller:
 if __name__ == '__main__':
     controller = Controller()
 
-    rospy.loginfo("Initializing Controller")
     # rate = rospy.Rate(1000)
     # rate.sleep()
     # while not rospy.is_shutdown() and not controller.explore():
