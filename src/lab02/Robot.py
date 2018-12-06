@@ -9,7 +9,7 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
 from rbe3002.srv import RobotNav
 
@@ -22,12 +22,12 @@ class Robot:
         Set up the node here
         """
         # Init node
-        rospy.init_node('robot_drive_controller')
+        rospy.init_node('robot_drive_controller', log_level=rospy.DEBUG)
         # Setup ros publishers
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         # Setup subscribers
         self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odom_callback)
-        self.sub_goal = rospy.Subscriber("/goal", PoseStamped, self.nav_to_pose)
+        self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_point)
         # Setup service client
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
 
@@ -38,10 +38,11 @@ class Robot:
         :return:
         """
         # type: (RobotNav) -> None
+        rospy.logdebug(req)
         goal = req.goal
         ignore_orientation = req.ignoreOrientation
         # Determine if the orientation needs to be ignored
-        if(ignore_orientation):
+        if (True or ignore_orientation):
             self.nav_to_point(goal)
             return True
         else:
@@ -74,6 +75,23 @@ class Robot:
         self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
         self.rotate(-self.yaw + goalAng)
 
+    def nav_to_point_old(self, path):
+        # type: (PoseStamped) -> None
+        """
+        :param goal: PoseStamped
+        :return:
+        """
+        for pose in pose.poses:
+            goalX = goal.pose.position.x
+            goalY = goal.pose.position.y
+
+            distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
+
+            angToGoal = math.atan2(goalY - self.py, goalX - self.px) - self.yaw
+
+            self.rotate(angToGoal)
+            self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
+
     def nav_to_point(self, goal):
         # type: (PoseStamped) -> None
         """
@@ -85,10 +103,42 @@ class Robot:
 
         distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
 
-        angToGoal = math.atan2(goalY - self.py, goalX - self.px) - self.yaw
+        angToGoal = math.atan2(goalY - self.py, goalX - self.px)
 
-        self.rotate(angToGoal)
-        self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
+
+        # Set update rate
+        rate = rospy.Rate(10)
+
+        # Initial angle
+        yaw = self.yaw
+        start = yaw
+
+        dest_ang = self.bounded_angle(angToGoal)
+        rospy.loginfo("Turning setpoint: %f" % angToGoal)
+        rospy.loginfo("Dist linear: %f" % distToGoal)
+        turn_error = self.bounded_angle(dest_ang - yaw)
+
+        # Loop while not there yet
+        while not rospy.is_shutdown() and \
+                (abs(distToGoal) > .05):
+            cmd = Twist()
+            angToGoal = math.atan2(goalY - self.py, goalX - self.px)
+            distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
+            turn_error = self.bounded_angle(angToGoal - yaw)
+            drive_error = distToGoal * (abs(turn_error) < .2)
+            cmd.linear.x = min(.1, drive_error)
+            # Proportional + feed forward control
+            cmd.angular.z = turn_error * (.3 + .1/abs(turn_error))
+            self.pub.publish(cmd)
+            rospy.logdebug("Turn: Set %s at %s error %s" % (angToGoal, self.yaw, turn_error))
+            rospy.logdebug("Drive: Dist %s Error %s Cmd %s" % (distToGoal, drive_error, cmd.linear.x))
+            # Update position
+            yaw = self.yaw
+            rate.sleep()
+        # Stop robot
+        cmd = Twist()
+        self.pub.publish(cmd)
+        rospy.loginfo("Done turning")
 
     def drive_straight(self, speed, distance):
         """
