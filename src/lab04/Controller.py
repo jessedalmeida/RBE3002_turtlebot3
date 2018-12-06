@@ -46,6 +46,7 @@ class Controller:
         self.pose = new_pose
 
     def explore(self):
+        rospy.loginfo("Exploring...")
         path_found = False
         done_exploring = False
         path_poses = Path().poses
