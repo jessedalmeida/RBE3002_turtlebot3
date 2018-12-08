@@ -24,14 +24,16 @@ class Controller:
         self.robot_nav = rospy.ServiceProxy('robot_nav', RobotNav)
         self.frontier_request = rospy.ServiceProxy('get_frontiers', FrontierRequest)
 
+        self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_point)
+
         self.goal = PoseStamped()
 
         self.pose = None
 
         rate = rospy.Rate(3000)
         rate.sleep()
-        while not rospy.is_shutdown() and not self.explore():
-            pass
+        # while not rospy.is_shutdown() and not self.explore():
+        #     pass
 
     def odom_callback(self, msg):
         # type: (Odometry) -> None
@@ -44,6 +46,13 @@ class Controller:
         new_pose = PoseStamped()
         new_pose.pose.position = position
         self.pose = new_pose
+
+    def nav_to_point(self, goal):
+        frontier_request_response = self.frontier_request()
+        map = frontier_request_response.map
+        path_response = self.make_path(self.pose, goal, map)
+        if path_response.success:
+            self.robot_nav(path_response.path)
 
     def explore(self):
         path_found = False
