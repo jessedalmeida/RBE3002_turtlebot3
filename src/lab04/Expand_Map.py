@@ -20,7 +20,7 @@ class Expand_Map:
         """
 
         # Initialize node
-        rospy.init_node("expand_map", log_level=rospy.INFO)
+        rospy.init_node("expand_map", log_level=rospy.DEBUG)
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
@@ -78,7 +78,11 @@ class Expand_Map:
             :return:
         """
         rospy.loginfo("Expanding Map")
+        now = rospy.get_time()
         self.get_map()
+
+        diff = rospy.get_time() - now
+        rospy.loginfo("Expansion complete: %s" % diff)
         return self.expanded_map
 
     def expand(self, my_map):
@@ -92,11 +96,14 @@ class Expand_Map:
         self.expanded_map = copy.copy(my_map)
         self.new_occupancy = list(self.expanded_map.data)
 
-        self.cells_to_paint = []
+        # self.cells_to_paint = []
 
         if self.first_run:
+            rospy.logdebug("First Run")
             self.already_expanded = [False] * len(self.new_occupancy)
+            self.first_run = False
 
+        rospy.logdebug("Iterating through")
         # iterate through all
         cells = my_map.data
         for i in range(len(cells)):
@@ -110,11 +117,13 @@ class Expand_Map:
                 point = map_helper.index1d_to_index2d(i, self.map)
                 self.puff_point(point)
 
+        rospy.logdebug("Publishing")
         grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
+        # grid = map_helper.to_grid_cells(self.cells_to_paint, self.map)
         self.pub_expanded_grid.publish(grid)
 
         self.expanded_map.data = tuple(self.new_occupancy)
-        rospy.logdebug("Expansion complete")
+
 
     def puff_point(self, point):
         """

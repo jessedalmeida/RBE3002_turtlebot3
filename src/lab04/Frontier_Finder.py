@@ -69,7 +69,7 @@ class FrontierFinder:
 
         frontier_poses = [map_helper.index2d_to_pose(cell, self.map) for cell in frontiers]
 
-        rospy.logdebug("Finished frontier search")
+        rospy.loginfo("Finished frontier search")
 
         return occupancy_grid.map, frontier_poses
 
