@@ -20,7 +20,7 @@ class Expand_Map:
         """
 
         # Initialize node
-        rospy.init_node("expand_map", log_level=rospy.DEBUG)
+        rospy.init_node("expand_map", log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
@@ -93,6 +93,7 @@ class Expand_Map:
 
         # iterate through all
         cells = my_map.data
+        rospy.loginfo("Map Size: %s" % len(cells))
         for i in range(len(cells)):
             # paint around radius of a point of wall
             if cells[i] == 100:
@@ -112,7 +113,7 @@ class Expand_Map:
         """
         # rospy.logdebug("Puffing point")
 
-        radius = 2 * int(math.ceil(self.robot_radius / self.map.info.resolution))
+        radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
         steps_out = 0
 
         visit = map_helper.get_neighbors(point, self.map)

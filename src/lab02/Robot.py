@@ -13,6 +13,10 @@ from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
 from rbe3002.srv import RobotNav
 
+
+def clamp(val, min_val=-.1, max_val=.1):
+    return max(min(max_val, val), min_val)
+
 class Robot:
     MAX_ANG_VEL = 1.0
     MAX_LIN_VEL = 0.2
@@ -99,9 +103,9 @@ class Robot:
         angToGoal = math.atan2(goalY - self.py, goalX - self.px)
         distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
         turn_error = self.bounded_angle(angToGoal - self.yaw)
-        drive_factor = math.cos(abs(turn_error))**3
+        drive_factor = math.cos(abs(turn_error))**5
         drive_error = distToGoal * drive_factor
-        cmd.linear.x = min(.1, drive_error)
+        cmd.linear.x = clamp(drive_error)
         # Proportional + feed forward control
         cmd.angular.z = turn_error * (.3 + .1/abs(turn_error))
         self.pub.publish(cmd)
@@ -132,7 +136,7 @@ class Robot:
     def nav_path(self, path):
         rate = rospy.Rate(10)
         for pose in path.poses:
-            while self.nav_toward_pose(pose) > .2:
+            while self.nav_toward_pose(pose) > .15:
                 rate.sleep()
         self.nav_to_pose(path.poses[-1])
 

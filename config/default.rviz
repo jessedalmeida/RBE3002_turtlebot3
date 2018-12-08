@@ -167,21 +167,20 @@ Visualization Manager:
       Show Axes: true
       Show Names: true
       Tree:
-        odom:
-          base_footprint:
-            base_link:
-              base_scan:
-                {}
-              caster_back_link:
-                {}
-              imu_link:
-                {}
-              wheel_left_link:
-                {}
-              wheel_right_link:
-                {}
-          map:
-            {}
+        map:
+          odom:
+            base_footprint:
+              base_link:
+                base_scan:
+                  {}
+                caster_back_link:
+                  {}
+                imu_link:
+                  {}
+                wheel_left_link:
+                  {}
+                wheel_right_link:
+                  {}
       Update Interval: 0
       Value: true
     - Alpha: 0.699999988
@@ -277,25 +276,25 @@ Visualization Manager:
   Views:
     Current:
       Class: rviz/XYOrbit
-      Distance: 4.83106661
+      Distance: 8.2039032
       Enable Stereo Rendering:
         Stereo Eye Separation: 0.0599999987
         Stereo Focal Distance: 1
         Swap Stereo Eyes: false
         Value: false
       Focal Point:
-        X: 1.89228272
-        Y: -1.93403602
+        X: 1.62319744
+        Y: -0.385802507
         Z: -4.76837158e-07
       Focal Shape Fixed Size: false
       Focal Shape Size: 0.0500000007
       Invert Z Axis: false
       Name: Current View
       Near Clip Distance: 0.00999999978
-      Pitch: 0.629796267
+      Pitch: 1.55479634
       Target Frame: <Fixed Frame>
       Value: XYOrbit (rviz)
-      Yaw: 5.40363646
+      Yaw: 5.39863825
     Saved: ~
 Window Geometry:
   Displays:
