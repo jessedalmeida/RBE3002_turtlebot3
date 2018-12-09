@@ -42,8 +42,9 @@ class Expand_Map:
 
         self.rate = rospy.Rate(.5)
 
-        # Conts
+        # Consts
         self.robot_radius = .1
+
         self.first_run = True
 
         self.cells_to_paint = []
@@ -95,17 +96,21 @@ class Expand_Map:
 
         self.expanded_map = copy.copy(my_map)
         self.new_occupancy = list(self.expanded_map.data)
+        useTime = 0
 
         # self.cells_to_paint = []
 
         if self.first_run:
             rospy.logdebug("First Run")
             self.already_expanded = [False] * len(self.new_occupancy)
+            self.radius = int(1.2 * math.ceil(self.robot_radius / self.map.info.resolution))
             self.first_run = False
 
         rospy.logdebug("Iterating through")
+        now = rospy.get_time()
         # iterate through all
         cells = my_map.data
+        rospy.logdebug("Length of iterations: %s" % len(cells))
         for i in range(len(cells)):
             # paint around radius of a point of wall
             if self.already_expanded[i]:
@@ -113,9 +118,15 @@ class Expand_Map:
 
             if cells[i] == 100 and not self.already_expanded[i]:
             # if cells[i] == 100:
+                startPuff = rospy.get_time()
                 self.already_expanded[i] = True
                 point = map_helper.index1d_to_index2d(i, self.map)
                 self.puff_point(point)
+                useTime += rospy.get_time() - startPuff
+
+        iterateTime = rospy.get_time() - now
+        rospy.logdebug("Iteration Time: %s" % (iterateTime))
+        rospy.logdebug("Puff Time: %s  Percentage used: %s" % (useTime, useTime/iterateTime))
 
         rospy.logdebug("Publishing")
         grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
@@ -124,21 +135,65 @@ class Expand_Map:
 
         self.expanded_map.data = tuple(self.new_occupancy)
 
+    def bfs_expand(self):
+        rospy.logdebug("Starting BFS")
+
+        start = (-10, -2)
+
+        now = rospy.get_time()
+
+        self.expanded_map = copy.copy(self.map)
+        self.new_occupancy = list(self.expanded_map.data)
+        self.radius = int(1.2 * math.ceil(self.robot_radius / self.map.info.resolution))
+
+        visited, queue = set(), [start]
+        while queue:
+            vertex = queue.pop(0)
+            index1d = map_helper.index2d_to_index1d(vertex, self.map)
+
+            if self.map.data[index1d] == 100:
+                self.puff_point(vertex)
+
+            if vertex not in visited:
+                visited.add(vertex)
+                neigh = map_helper.get_neighbors_expanded(vertex, self.map)
+
+                if neigh is None:
+                    neigh = set()
+                else:
+                    neigh = set(neigh)
+
+                rospy.logdebug("neighbors: %s" % neigh)
+                a = neigh - visited
+                rospy.logdebug("Extend: %s" % a)
+                queue.extend(a)
+
+
+        iterateTime = rospy.get_time() - now
+        rospy.logdebug("Iteration Time: %s" % (iterateTime))
+
+        rospy.logdebug("Publishing")
+        grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
+        # grid = map_helper.to_grid_cells(self.cells_to_paint, self.map)
+        self.pub_expanded_grid.publish(grid)
+
+        self.expanded_map.data = tuple(self.new_occupancy)
+        # return visited
+
 
     def puff_point(self, point):
         """
         Looks at all neighbors in radius of a point and, if unoccupied, makes them occupied
         :param point: tuple of index2d
-        :return:
+        :return: adds to globals cells_to_paint and new_occupancy
         """
         # rospy.logdebug("Puffing point")
 
-        radius = 2 * int(math.ceil(self.robot_radius / self.map.info.resolution))
         steps_out = 0
 
         visit = map_helper.get_neighbors(point, self.map)
 
-        while steps_out < radius and not rospy.is_shutdown():
+        while steps_out < self.radius and not rospy.is_shutdown():
             # rospy.logdebug("Current r step: %s Visited: %s" % (steps_out, visit))
             neighbors_to_expand = visit
             visit = []
@@ -162,7 +217,8 @@ class Expand_Map:
 
     def get_map(self):
         # self.map = self.dynamic_map()
-        self.expand(self.map)
+        # self.expand(self.map)
+        self.bfs_expand()
         pass
 
 
