@@ -24,6 +24,8 @@ class Controller:
         self.robot_nav = rospy.ServiceProxy('robot_nav', RobotNav)
         self.frontier_request = rospy.ServiceProxy('get_frontiers', FrontierRequest)
 
+        self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_point)
+
         self.goal = PoseStamped()
 
         self.pose = None
@@ -45,7 +47,15 @@ class Controller:
         new_pose.pose.position = position
         self.pose = new_pose
 
+    def nav_to_point(self, goal):
+        frontier_request_response = self.frontier_request()
+        map = frontier_request_response.map
+        path_response = self.make_path(self.pose, goal, map)
+        if path_response.success:
+            self.robot_nav(path_response.path)
+
     def explore(self):
+        rospy.loginfo("Exploring...")
         path_found = False
         done_exploring = False
         path_poses = Path().poses
@@ -72,12 +82,10 @@ class Controller:
             done_exploring = True
         else:
             rospy.logdebug("Trying to go to a frontier")
-            for pose in path_poses[0:-1]:
-                if not self.robot_nav(pose, True):
-                    rospy.logwarn("Robot navigation failed")
-                    return
-                rospy.logdebug("At point %s" % self.pose)
-            self.robot_nav(path_poses[-1], False)
+            if not self.robot_nav(path_response.horiz_path):
+                rospy.logwarn("Robot navigation failed")
+                return
+            rospy.logdebug("At point %s" % self.pose)
 
         if done_exploring:
             rospy.loginfo("Done Exploring")

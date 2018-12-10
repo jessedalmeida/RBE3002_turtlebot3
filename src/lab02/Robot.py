@@ -9,9 +9,13 @@ from geometry_msgs.msg import PoseStamped, PointStamped
 from geometry_msgs.msg import Pose
 from geometry_msgs.msg import Quaternion
 from geometry_msgs.msg import Twist
-from nav_msgs.msg import Odometry
+from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
 from rbe3002.srv import RobotNav
+
+
+def clamp(val, min_val=-.1, max_val=.1):
+    return max(min(max_val, val), min_val)
 
 class Robot:
     MAX_ANG_VEL = 1.0
@@ -22,12 +26,12 @@ class Robot:
         Set up the node here
         """
         # Init node
-        rospy.init_node('robot_drive_controller')
+        rospy.init_node('robot_drive_controller', log_level=rospy.DEBUG)
         # Setup ros publishers
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         # Setup subscribers
         self.sub_odom = rospy.Subscriber("/odom", Odometry, self.odom_callback)
-        self.sub_goal = rospy.Subscriber("/goal", PoseStamped, self.nav_to_pose)
+        # self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_pose)
         # Setup service client
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
 
@@ -38,17 +42,13 @@ class Robot:
         :return:
         """
         # type: (RobotNav) -> None
-        goal = req.goal
-        ignore_orientation = req.ignoreOrientation
+        rospy.logdebug(req)
+        path = req.path
         # Determine if the orientation needs to be ignored
-        if(ignore_orientation):
-            self.nav_to_point(goal)
-            return True
-        else:
-            self.nav_to_pose(goal)
-            return True
+        self.nav_path(path)
+        return True
 
-    def nav_to_pose(self, goal):
+    def nav_to_pose_old(self, goal):
         # type: (PoseStamped) -> None
         """
         This is a callback function. It should extract data from goal, drive in a striaght line to reach the goal and
@@ -74,8 +74,24 @@ class Robot:
         self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
         self.rotate(-self.yaw + goalAng)
 
-    def nav_to_point(self, goal):
+    def nav_to_point_old(self, goal):
         # type: (PoseStamped) -> None
+        """
+        :param goal: PoseStamped
+        :return:
+        """
+        for pose in pose.poses:
+            goalX = goal.pose.position.x
+            goalY = goal.pose.position.y
+
+            distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
+
+            angToGoal = math.atan2(goalY - self.py, goalX - self.px) - self.yaw
+
+            self.rotate(angToGoal)
+            self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
+
+    def nav_toward_pose(self, goal):
         """
         :param goal: PoseStamped
         :return:
@@ -83,12 +99,46 @@ class Robot:
         goalX = goal.pose.position.x
         goalY = goal.pose.position.y
 
+        cmd = Twist()
+        angToGoal = math.atan2(goalY - self.py, goalX - self.px)
         distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
+        turn_error = self.bounded_angle(angToGoal - self.yaw)
+        drive_factor = math.cos(abs(turn_error))**5
+        drive_error = distToGoal * drive_factor
+        cmd.linear.x = clamp(drive_error)
+        # Proportional + feed forward control
+        cmd.angular.z = turn_error * (.3 + .1/abs(turn_error))
+        self.pub.publish(cmd)
+        rospy.logdebug("Turn: Set %s at %s error %s" % (angToGoal, self.yaw, turn_error))
+        rospy.logdebug("Drive: Dist %s Error %s Cmd %s" % (distToGoal, drive_error, cmd.linear.x))
 
-        angToGoal = math.atan2(goalY - self.py, goalX - self.px) - self.yaw
+        if rospy.is_shutdown() or abs(distToGoal) < .05:
+            cmd = Twist()
+            self.pub.publish(cmd)
+            rospy.loginfo("Done turning")
+            return 0
+        return distToGoal
 
-        self.rotate(angToGoal)
-        self.drive_straight(Robot.MAX_LIN_VEL, distToGoal)
+    def nav_to_pose(self, pose, ignore_orientation=True):
+        goalQuat = (pose.pose.orientation.x,
+                    pose.pose.orientation.y,
+                    pose.pose.orientation.z,
+                    pose.pose.orientation.w)
+        euler = tf.transformations.euler_from_quaternion(goalQuat)
+        goalAng = euler[2]
+
+        rate = rospy.Rate(10)
+        while self.nav_toward_pose(pose):
+            rate.sleep()
+        if not ignore_orientation:
+            self.rotate(-self.yaw + goalAng)
+
+    def nav_path(self, path):
+        rate = rospy.Rate(10)
+        for pose in path.poses:
+            while self.nav_toward_pose(pose) > .15:
+                rate.sleep()
+        self.nav_to_pose(path.poses[-1])
 
     def drive_straight(self, speed, distance):
         """
@@ -158,7 +208,7 @@ class Robot:
 
         # Loop while not there yet
         while not rospy.is_shutdown() and \
-                abs(error) > .03:
+                abs(error) > .1:
             cmd = Twist()
             cmd.linear.x = 0
             error = self.bounded_angle(dest_ang - yaw)

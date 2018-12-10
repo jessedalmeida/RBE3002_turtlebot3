@@ -1,8 +1,8 @@
 <launch>
-<!--
-	<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_empty_world.launch" />
-	<include file="$(find rbe3002)/launch/rviz_mapping.launch" />
-	-->
+	<!--<include file="$(find turtlebot3_gazebo)/launch/turtlebot3_empty_world.launch" />-->
+
+	<!--<include file="$(find rbe3002)/launch/rviz_mapping.launch" />-->
+
 	<include file="$(find rbe3002)/launch/gazebo_rviz_mapping.launch" />
 
     <node name="expand_map" pkg="rbe3002" type="Expand_Map.py" output="screen"/>

@@ -275,10 +275,27 @@ class A_Star:
         :param next: following point
         :return: return whether the point is directly between adjacent points
         """
+        # cleaning straight lines
         if last[0] == curr[0] == next[0]:
             return True
         if last[1] == curr[1] == next[1]:
             return True
+
+        # cleaning diagonal lines
+        res = self.map.info.resolution
+        # if diag in first quadrant
+        if (last[0] + res == curr[0] == next[0] - res) and (last[1] + res == curr[1] == next[1] - res):
+            return True
+        # if diag in second quadrant
+        if (last[0] - res == curr[0] == next[0] + res) and (last[1] + res == curr[1] == next[1] - res):
+            return True
+        # if diag in third quadrant
+        if (last[0] - res == curr[0] == next[0] + res) and (last[1] - res == curr[1] == next[1] + res):
+            return True
+        # if diag in fourth quadrant
+        if (last[0] + res == curr[0] == next[0] - res) and (last[1] - res == curr[1] == next[1] + res):
+            return True
+
         return False
 
     def paint_cells(self, frontier, came_from):

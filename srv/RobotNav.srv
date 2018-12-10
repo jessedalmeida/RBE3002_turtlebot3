@@ -1,4 +1,3 @@
-geometry_msgs/PoseStamped goal
-bool ignoreOrientation
+nav_msgs/Path path
 ---
 bool success
