@@ -61,19 +61,19 @@ class A_Star:
         self.create_map(req.map)
         rospy.logdebug("Start: %s" % start)
         rospy.logdebug("Goal: %s" % goal)
-        try:
-            self.paint_point(start, goal)
-            # Path from list of points
-            path = self.publish_path(self.points)
-            # Path until horizon
-            horiz_path = self.horizon_path(path)
-            success = True
-        except Exception as e:
-            rospy.logdewarn("Failed to find path")
-            rospy.logdebug(e)
-            path = Path()
-            horiz_path = Path()
-            success = False
+        # try:
+        self.paint_point(start, goal)
+        # Path from list of points
+        path = self.publish_path(self.points)
+        # Path until horizon
+        horiz_path = self.horizon_path(path)
+        success = True
+        # except Exception as e:
+        #     rospy.logwarn("Failed to find path")
+        #     rospy.loginfo(e)
+        #     path = Path()
+        #     horiz_path = Path()
+        #     success = False
 
         # Return path and horizon path in service call
         return path, horiz_path, success
@@ -140,6 +140,7 @@ class A_Star:
         # Transform start and end
         start = map_helper.world_to_index2d(start, self.map)
         start = map_helper.get_closest_open(start, self.map)
+        rospy.logdebug("Starting at: %s, %s" % (start[0], start[1]))
         goal = map_helper.world_to_index2d(goal, self.map)
 
         # Priority queue for frontier
@@ -191,7 +192,7 @@ class A_Star:
         # Generate path
         path = [map_helper.index2d_to_world(goal, self.map)]
         last_node = goal
-        while came_from[last_node] is not None:
+        while last_node in came_from and came_from[last_node] is not None:
             next_node = came_from[last_node]
             path.insert(0, map_helper.index2d_to_world(next_node, self.map))
             last_node = next_node

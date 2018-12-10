@@ -88,6 +88,7 @@ class FrontierFinder:
         :return: point closest to centroid
         """
         robot = self.position
+        rospy.logdebug(robot)
 
         # Guess closest
         shortest_distance = map_helper.euclidean_distance(points[0], robot)

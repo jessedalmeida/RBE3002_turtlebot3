@@ -66,6 +66,7 @@ def get_neighbors_8count(index2d, my_map, occupation=0):
 
     return list_of_neighbors
 
+
 def get_neighbors_bfs(index2d, my_map):
     """
         returns the legal neighbors in 8count of index2d, including walls
@@ -92,13 +93,25 @@ def get_neighbors_bfs(index2d, my_map):
 
 
 def get_closest_open(index2d, my_map):
-    cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
-    if cell_val == 0:
-        return index2d
-    for neighbor in get_neighbors(index2d, my_map):
-        cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
-        if cell_val == 0:
-            return neighbor
+    visited, queue = set(), [index2d]
+    done = False
+    while not done and queue:
+        vertex = queue.pop(0)
+        index1d = index2d_to_index1d(vertex, my_map)
+
+        if my_map.data[index1d] == 0:
+            return vertex
+
+        if vertex not in visited:
+            visited.add(vertex)
+            neighbors = get_neighbors_bfs(vertex, my_map)
+
+            if neighbors is None:
+                neighbors = set()
+            else:
+                neighbors = set(neighbors)
+
+            queue.extend(neighbors - visited)
 
 
 def is_valid_index2d(index2d, my_map, occupation=0):

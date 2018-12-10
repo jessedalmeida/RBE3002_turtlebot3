@@ -14,7 +14,7 @@ from tf.transformations import euler_from_quaternion
 from rbe3002.srv import RobotNav
 
 
-def clamp(val, min_val=-.1, max_val=.1):
+def clamp(val, min_val=-.07, max_val=.07):
     return max(min(max_val, val), min_val)
 
 class Robot:
@@ -41,7 +41,7 @@ class Robot:
         :param req: RobotNav request
         :return:
         """
-        # type: (RobotNav) -> None
+        # type: (RobotNav) -> bool
         rospy.logdebug(req)
         path = req.path
         # Determine if the orientation needs to be ignored
@@ -80,7 +80,7 @@ class Robot:
         :param goal: PoseStamped
         :return:
         """
-        for pose in pose.poses:
+        for pose in goal.poses:
             goalX = goal.pose.position.x
             goalY = goal.pose.position.y
 
@@ -104,7 +104,7 @@ class Robot:
         distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
         turn_error = self.bounded_angle(angToGoal - self.yaw)
         drive_factor = math.cos(abs(turn_error))**5
-        drive_error = distToGoal * drive_factor
+        drive_error = distToGoal * drive_factor * .5
         cmd.linear.x = clamp(drive_error)
         # Proportional + feed forward control
         cmd.angular.z = turn_error * (.3 + .1/abs(turn_error))
@@ -112,7 +112,7 @@ class Robot:
         rospy.logdebug("Turn: Set %s at %s error %s" % (angToGoal, self.yaw, turn_error))
         rospy.logdebug("Drive: Dist %s Error %s Cmd %s" % (distToGoal, drive_error, cmd.linear.x))
 
-        if rospy.is_shutdown() or abs(distToGoal) < .05:
+        if rospy.is_shutdown() or abs(distToGoal) < .03:
             cmd = Twist()
             self.pub.publish(cmd)
             rospy.loginfo("Done turning")

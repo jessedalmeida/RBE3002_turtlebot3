@@ -87,7 +87,7 @@ class Expand_Map:
 
         self.expanded_map = copy.copy(self.map)
         self.new_occupancy = list(self.expanded_map.data)
-        self.radius = int(1.2 * math.ceil(self.robot_radius / self.map.info.resolution))
+        self.radius = int(1.4 * math.ceil(self.robot_radius / self.map.info.resolution))
         useTime = 0
 
         visited, queue = set(), [start]
