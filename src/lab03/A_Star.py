@@ -137,6 +137,7 @@ class A_Star:
         """
         # Transform start and end
         start = map_helper.world_to_index2d(start, self.map)
+        start = map_helper.get_closest_open(start, self.map)
         goal = map_helper.world_to_index2d(goal, self.map)
 
         # Priority queue for frontier
@@ -257,6 +258,7 @@ class A_Star:
             :param path: list of tuples
             :return: reduced list of tuples
         """
+        return path
         pathOptimized = []
 
         for idx in range(len(path)):
@@ -339,7 +341,7 @@ class A_Star:
         :param path: Path()
         :return: Path()
         """
-        horizon_dist = 0.5
+        horizon_dist = 0.3
         traveled_dist = 0
         horizon_path = Path()
         horizon_path.header.frame_id = "/odom"

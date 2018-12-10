@@ -96,8 +96,17 @@ def get_neighbors_8count(index2d, my_map, occupation=0):
     #     neighbor_n = (x_index+1, y_index + 1)
     #     list_of_neighbors.append(neighbor_n)
 
-
     return list_of_neighbors
+
+
+def get_closest_open(index2d, my_map):
+    cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
+    if cell_val == 0:
+        return index2d
+    for neighbor in get_neighbors(index2d, my_map):
+        cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
+        if cell_val == 0:
+            return neighbor
 
 
 def is_valid_index2d(index2d, my_map, occupation=0):

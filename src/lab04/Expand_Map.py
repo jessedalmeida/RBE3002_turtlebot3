@@ -113,7 +113,7 @@ class Expand_Map:
         """
         # rospy.logdebug("Puffing point")
 
-        radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
+        radius = int(1.4 * math.ceil(self.robot_radius / self.map.info.resolution))
         steps_out = 0
 
         visit = map_helper.get_neighbors(point, self.map)
