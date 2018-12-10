@@ -22,7 +22,7 @@ class FrontierFinder:
             an array of points in frontiers sorted by distance to the robot.
         """
         # Initialize node
-        rospy.init_node("frontier_finder", log_level=rospy.DEBUG)  # start node
+        rospy.init_node("frontier_finder", log_level=rospy.INFO)  # start node
 
         # Setup Map Publishers
         self.map_frontier_pub = rospy.Publisher("local_costmap/MapFrontier", GridCells, queue_size=10)
