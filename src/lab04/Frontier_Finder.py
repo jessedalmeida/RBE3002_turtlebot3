@@ -56,7 +56,7 @@ class FrontierFinder:
         start = rospy.get_time()
 
         # Find frontier points
-        frontier_points = self.find_frontier_points()
+        frontier_points = self.bfs_find_frontier_points()
 
         ftpts = rospy.get_time()
         rospy.logdebug("Frontier Points Time: %s" % (ftpts - start))
@@ -115,7 +115,7 @@ class FrontierFinder:
         if self.map and self.map.info.resolution:
             self.position = map_helper.world_to_index2d(coords, self.map)
 
-        self.position = position
+        self.world_position = position
 
     def find_frontier_points(self):
         """
@@ -140,7 +140,7 @@ class FrontierFinder:
         :return: dictionary where keys are the point tuples and values are one element arrays of the same frontier point
         """
         frontier = {}
-        start = map_helper.world_to_index2d((self.position.x, self.position.y), self.map)
+        start = map_helper.world_to_index2d((self.world_position.x, self.world_position.y), self.map)
 
         visited, queue = set(), [start]
         while queue:
