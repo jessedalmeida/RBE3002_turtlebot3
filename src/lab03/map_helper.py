@@ -66,7 +66,7 @@ def get_neighbors_8count(index2d, my_map, occupation=0):
 
     return list_of_neighbors
 
-def get_neighbors_expanded(index2d, my_map):
+def get_neighbors_bfs(index2d, my_map):
     """
         returns the legal neighbors in 8count of index2d, including walls
         :param index2d: tuple of index in 2d grid cells
@@ -88,6 +88,7 @@ def get_neighbors_expanded(index2d, my_map):
                 neighbor_n = (x_index + dx, y_index + dy)
                 list_of_neighbors.append(neighbor_n)
 
+    return list_of_neighbors
 
 def is_valid_index2d(index2d, my_map, occupation=0):
     """
