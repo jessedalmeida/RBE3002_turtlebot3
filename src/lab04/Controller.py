@@ -55,6 +55,7 @@ class Controller:
             self.robot_nav(path_response.path)
 
     def explore(self):
+        rospy.loginfo("Exploring...")
         path_found = False
         done_exploring = False
         path_poses = Path().poses

@@ -208,7 +208,7 @@ class Robot:
 
         # Loop while not there yet
         while not rospy.is_shutdown() and \
-                abs(error) > .03:
+                abs(error) > .1:
             cmd = Twist()
             cmd.linear.x = 0
             error = self.bounded_angle(dest_ang - yaw)
