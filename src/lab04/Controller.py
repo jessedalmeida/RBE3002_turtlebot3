@@ -32,8 +32,8 @@ class Controller:
 
         rate = rospy.Rate(3000)
         rate.sleep()
-        # while not rospy.is_shutdown() and not self.explore():
-        #     pass
+        while not rospy.is_shutdown() and not self.explore():
+            pass
 
     def odom_callback(self, msg):
         # type: (Odometry) -> None
