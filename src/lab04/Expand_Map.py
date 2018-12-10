@@ -7,7 +7,7 @@ import math
 import map_helper
 import copy
 from nav_msgs.srv import GetMap
-from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
+from nav_msgs.msg import OccupancyGrid, GridCells, Odometry, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
 
 
@@ -24,26 +24,20 @@ class Expand_Map:
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
+        rospy.Subscriber("/odom", Odometry, self.odom_callback)
 
         # Publishers
         self.pub_expanded_grid = rospy.Publisher("local_costmap/expanded", GridCells, queue_size=10)
-        # Full Path
-        # Horizon Path
-
-        # Service Calls
-        # self.dynamic_map = rospy.ServiceProxy('dynamic_map', GetMap)
-        # Full Path
-        # Horizon Path
 
         # Setup service server
         rospy.Service('get_expanded_map', GetMap, self.handle_map)
 
+        # Consts
         self.map = OccupancyGrid()
-
         self.rate = rospy.Rate(.5)
-
-        # Conts
         self.robot_radius = .1
+        self.first_run = True
+        self.cells_to_paint = []
 
         while self.map is None and not rospy.is_shutdown():
             pass
@@ -55,71 +49,91 @@ class Expand_Map:
             :param msg: map
             :return: None
         """
-
-        rospy.logdebug("Getting map")
         self.map = msg
 
-        # Show map details for debugging
-        rospy.logdebug("Resolution is: %s" % msg.info.resolution)
-        x_index_offset = self.map.info.origin.position.x
-        y_index_offset = self.map.info.origin.position.y
-        rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
-
-        width = self.map.info.width
-        height = self.map.info.height
-        rospy.logdebug("Map Width: %s Height: %s" % (width, height))
+    def odom_callback(self, msg):
+        # type: (Odometry) -> None
+        """
+        update the state of the robot
+        :type msg: Odom
+        :return:
+        """
+        self.curr_position = msg.pose.pose.position
 
     def handle_map(self, req):
         """
             Service call to get map and expand it
             :return:
         """
+        rospy.loginfo("Expanding Map")
+        now = rospy.get_time()
         self.get_map()
+
+        diff = rospy.get_time() - now
+        rospy.loginfo("Expansion complete: %s" % diff)
         return self.expanded_map
 
-    def expand(self, my_map):
-        #type: (OccupancyGrid) -> None
+    def bfs_expand(self):
         """
-            Expand the map and return it
-            :param my_map: map
-            :return: map
+        Start at current position and use bfs to only search the immediate map area
+        :return:
         """
-        rospy.logdebug("Expanding the map")
+        rospy.logdebug("Starting BFS")
 
-        self.cells_to_paint = []
+        start = map_helper.world_to_index2d((self.curr_position.x, self.curr_position.y), self.map)
 
-        self.expanded_map = copy.copy(my_map)
+        rospy.logdebug("Start Node: %s" % self.curr_position)
+        now = rospy.get_time()
+
+        self.expanded_map = copy.copy(self.map)
         self.new_occupancy = list(self.expanded_map.data)
+        self.radius = int(1.2 * math.ceil(self.robot_radius / self.map.info.resolution))
+        useTime = 0
 
-        # iterate through all
-        cells = my_map.data
-        rospy.loginfo("Map Size: %s" % len(cells))
-        for i in range(len(cells)):
-            # paint around radius of a point of wall
-            if cells[i] == 100:
-                point = map_helper.index1d_to_index2d(i, self.map)
-                self.puff_point(point)
-        grid = map_helper.to_grid_cells(self.remove_duplicates(self.cells_to_paint), self.map)
+        visited, queue = set(), [start]
+        while queue:
+            vertex = queue.pop(0)
+            index1d = map_helper.index2d_to_index1d(vertex, self.map)
+
+            if self.map.data[index1d] == 100:
+                startPuff = rospy.get_time()
+                self.puff_point(vertex)
+                useTime += rospy.get_time() - startPuff
+
+            if vertex not in visited:
+                visited.add(vertex)
+                neighbors = map_helper.get_neighbors_bfs(vertex, self.map)
+
+                if neighbors is None:
+                    neighbors = set()
+                else:
+                    neighbors = set(neighbors)
+
+                queue.extend(neighbors - visited)
+
+
+        iterateTime = rospy.get_time() - now
+        rospy.logdebug("Iteration Time: %s" % (iterateTime))
+        rospy.logdebug("Puff Time: %s  Percentage used: %s" % (useTime, useTime/iterateTime))
+
+
+        rospy.logdebug("Publishing")
+        grid = map_helper.to_grid_cells(self.cells_to_paint, self.map)
         self.pub_expanded_grid.publish(grid)
 
         self.expanded_map.data = tuple(self.new_occupancy)
-        rospy.logdebug("Expansion complete")
 
     def puff_point(self, point):
         """
         Looks at all neighbors in radius of a point and, if unoccupied, makes them occupied
         :param point: tuple of index2d
-        :return:
+        :return: adds to globals cells_to_paint and new_occupancy
         """
-        # rospy.logdebug("Puffing point")
-
-        radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
         steps_out = 0
 
         visit = map_helper.get_neighbors(point, self.map)
 
-        while steps_out < radius and not rospy.is_shutdown():
-            # rospy.logdebug("Current r step: %s Visited: %s" % (steps_out, visit))
+        while steps_out < self.radius and not rospy.is_shutdown():
             neighbors_to_expand = visit
             visit = []
 
@@ -141,19 +155,12 @@ class Expand_Map:
         return final_list
 
     def get_map(self):
-        # self.map = self.dynamic_map()
-        self.expand(self.map)
+        self.bfs_expand()
         pass
 
 
 if __name__ == '__main__':
     expanded = Expand_Map()
-    # rate = rospy.Rate(1)
-
-    # while not rospy.is_shutdown():
-    #     expanded.expand(expanded.map)
-    #     rate.sleep()
-
     rospy.spin()
 
 

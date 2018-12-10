@@ -12,9 +12,10 @@ class Controller:
         """
             This node explores frontiers until no frontiers remain
         """
+        rospy.loginfo("Initializing Controller")
 
         # Initialize node
-        rospy.init_node('controller', log_level=rospy.DEBUG)
+        rospy.init_node('controller', log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
@@ -55,7 +56,7 @@ class Controller:
             self.robot_nav(path_response.path)
 
     def explore(self):
-        rospy.loginfo("Exploring...")
+
         path_found = False
         done_exploring = False
         path_poses = Path().poses
@@ -64,6 +65,7 @@ class Controller:
             rospy.loginfo("No known pose!")
             return
 
+        rospy.loginfo("Expanding Map and Updating Frontiers")
         frontier_request_response = self.frontier_request()
         map = frontier_request_response.map
         frontiers = frontier_request_response.frontiers
@@ -95,7 +97,6 @@ class Controller:
 if __name__ == '__main__':
     controller = Controller()
 
-    rospy.loginfo("Initializing Controller")
     # rate = rospy.Rate(1000)
     # rate.sleep()
     # while not rospy.is_shutdown() and not controller.explore():

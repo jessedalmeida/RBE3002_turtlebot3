@@ -52,15 +52,24 @@ class FrontierFinder:
         occupancy_grid = self.get_map()
         self.map = occupancy_grid.map
 
+        rospy.loginfo("Finding Frontier")
+        start = rospy.get_time()
+
         # Find frontier points
-        frontier_points = self.find_frontier_points()
+        frontier_points = self.bfs_find_frontier_points()
+
+        ftpts = rospy.get_time()
+        rospy.logdebug("Frontier Points Time: %s" % (ftpts - start))
 
         # Publish frontier points
         frontier_cells = map_helper.to_grid_cells(frontier_points.keys(), self.map, True)
         self.map_frontier_pub.publish(frontier_cells)
 
+
         # Group points
         frontiers = self.group_frontiers(frontier_points)
+        group = rospy.get_time()
+        rospy.logdebug("Group time: %s " % (group - ftpts))
 
         # Display closest points
         frontier_group_cells = map_helper.to_grid_cells(frontiers, self.map, True)
@@ -68,7 +77,7 @@ class FrontierFinder:
 
         frontier_poses = [map_helper.index2d_to_pose(cell, self.map) for cell in frontiers]
 
-        rospy.logdebug("Finished frontier search")
+        rospy.loginfo("Finished frontier search %s" %(rospy.get_time() - start))
 
         return occupancy_grid.map, frontier_poses
 
@@ -106,6 +115,8 @@ class FrontierFinder:
         if self.map and self.map.info.resolution:
             self.position = map_helper.world_to_index2d(coords, self.map)
 
+        self.world_position = position
+
     def find_frontier_points(self):
         """
         iterates through the map to find points along the frontier
@@ -120,6 +131,37 @@ class FrontierFinder:
                 point = map_helper.index1d_to_index2d(i, self.map)
                 if map_helper.get_neighbors(point, self.map, -1):  # Checks if there are unknown neighbors
                     frontier[point] = [point]
+
+        return frontier
+
+    def bfs_find_frontier_points(self):
+        """
+        iterates through the map to find points along the frontier using bfs
+        :return: dictionary where keys are the point tuples and values are one element arrays of the same frontier point
+        """
+        frontier = {}
+        start = map_helper.world_to_index2d((self.world_position.x, self.world_position.y), self.map)
+
+        visited, queue = set(), [start]
+        while queue:
+            vertex = queue.pop(0)
+            index1d = map_helper.index2d_to_index1d(vertex, self.map)
+
+            # if occupied
+            if self.map.data[index1d] == 0:
+                if map_helper.get_neighbors(vertex, self.map, -1):  # Checks if there are unknown neighbors
+                    frontier[vertex] = [vertex]
+
+            if vertex not in visited:
+                visited.add(vertex)
+                neighbors = map_helper.get_neighbors_bfs(vertex, self.map)
+
+                if neighbors is None:
+                    neighbors = set()
+                else:
+                    neighbors = set(neighbors)
+
+                queue.extend(neighbors - visited)
 
         return frontier
 
