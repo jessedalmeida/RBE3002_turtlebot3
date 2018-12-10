@@ -4,7 +4,10 @@ from geometry_msgs.msg import PoseStamped
 from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
 from rbe3002.srv import MakePath, RobotNav, FrontierRequest
-
+import sys
+import os
+sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lab03'))
+import map_helper
 
 class Controller:
 
@@ -61,24 +64,38 @@ class Controller:
 
         for frontier in frontiers:
             path_response = self.make_path(self.pose, frontier, map)
-            rospy.logdebug("Response: %s" % path_response)
-            rospy.logdebug("Successful path: %s" % path_response.success)
+            # rospy.logdebug("Response: %s" % path_response)
+            # rospy.logdebug("Successful path: %s" % path_response.success)
+            rospy.loginfo("Potential Path points: ")
+            for pose in path_response.path.poses:
+                rospy.loginfo(pose.pose.position)
+            rospy.loginfo("Potential Horizon Path points: ")
+            for pose in path_response.horiz_path.poses:
+                rospy.loginfo(pose.pose.position)
             if path_response.success:
                 path_found = True
                 path_poses = path_response.horiz_path.poses
-                rospy.logdebug("Successful, going to path %s" % path_response.horiz_path.poses)
+                #rospy.logdebug("Successful, going to path %s" % path_response.horiz_path.poses)
                 break
 
         if not path_found:
             done_exploring = True
         else:
+
             rospy.logdebug("Trying to go to a frontier")
-            for pose in path_poses[0:-1]:
+            rospy.loginfo("Path points: ")
+            for pose in path_response.path.poses:
+                rospy.loginfo(pose.pose.position)
+            rospy.loginfo("Horizon Path points: ")
+            for pose in path_response.horiz_path.poses:
+                rospy.loginfo(pose.pose.position)
+
+            for pose in path_poses:
                 if not self.robot_nav(pose, True):
                     rospy.logwarn("Robot navigation failed")
                     return
-                rospy.logdebug("At point %s" % self.pose)
-            self.robot_nav(path_poses[-1], False)
+            #     # rospy.logdebug("At point %s" % self.pose)
+            # self.robot_nav(path_poses[-1], False)
 
         if done_exploring:
             rospy.loginfo("Done Exploring")

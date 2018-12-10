@@ -9,7 +9,6 @@ from rbe3002.srv import MakePath
 import tf
 from tf.transformations import euler_from_quaternion
 
-
 class A_Star:
 
     def __init__(self):
@@ -33,8 +32,8 @@ class A_Star:
 
         # Set map to none
         self.map = None
-        rospy.logdebug("Initializing A_Star")
-
+       # rospy.logdebug("Initializing A_Star")
+        self.unop_path = Path()
         self.goal = PoseStamped()
         self.start = PoseStamped()
         self.pose = Pose()
@@ -57,24 +56,34 @@ class A_Star:
         start = req.start
         goal = req.goal
         self.create_map(req.map)
-        rospy.logdebug("Start: %s" % start)
-        rospy.logdebug("Goal: %s" % goal)
+        # rospy.logdebug("Start: %s" % start)
+        # rospy.logdebug("Goal: %s" % goal)
         try:
             self.paint_point(start, goal)
             # Path from list of points
             path = self.publish_path(self.points)
+
+            # Safe path
+            safe_path = self.safe_path(path)
+
             # Path until horizon
-            horiz_path = self.horizon_path(path)
+            horiz_path = self.horizon_path(safe_path)
+
+            return_path = horiz_path
             success = True
+            if (len(return_path.poses) == 0):
+                success = False
+            if (self.pose_distance(return_path.poses[0],return_path.poses[len(return_path.poses)-1]) < 0.1):
+                success = False
         except Exception as e:
             rospy.logdebug("Failed to find path")
             rospy.logdebug(e)
             path = Path()
-            horiz_path = Path()
+            return_path = Path()
             success = False
 
         # Return path and horizon path in service call
-        return path, horiz_path, success
+        return path, return_path, success
 
     def create_map(self, new_map):
 
@@ -82,14 +91,14 @@ class A_Star:
             Get map and set class variables
             :return:
         """
-        rospy.logdebug("Getting map")
+       # rospy.logdebug("Getting map")
         # Update map
         self.map = new_map
         # Show map details for debugging
-        rospy.logdebug("Resolution is: %s" % new_map.info.resolution)
+        #rospy.logdebug("Resolution is: %s" % new_map.info.resolution)
         x_index_offset = self.map.info.origin.position.x
         y_index_offset = self.map.info.origin.position.y
-        rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
+       # rospy.logdebug("Map Origin: x: %s y: %s" % (x_index_offset, y_index_offset))
 
     def paint_point(self, start_pose, end_pose):
         """
@@ -115,8 +124,8 @@ class A_Star:
         end_ang = end_euler[2]
 
         # Print debug information
-        rospy.logdebug("Start x, y, ang: %s %s %s" % (start_x, start_y, start_ang))
-        rospy.logdebug("Goal x, y, ang: %s %s %s" % (end_x, end_y, end_ang))
+        # rospy.logdebug("Start x, y, ang: %s %s %s" % (start_x, start_y, start_ang))
+        # rospy.logdebug("Goal x, y, ang: %s %s %s" % (end_x, end_y, end_ang))
 
         # Generate cell for end position
         painted_cell = map_helper.to_grid_cells([(end_x, end_y)], self.map)
@@ -162,8 +171,8 @@ class A_Star:
                 break
 
             # Add neighbors to frontier
-            rospy.logdebug("Neighbors: %s" % map_helper.get_neighbors(current, self.map))
-            for next in map_helper.get_neighbors(current, self.map):
+            #rospy.logdebug("Neighbors: %s" % map_helper.get_neighbors_8count(current, self.map))
+            for next in map_helper.get_neighbors_8count(current, self.map):
                 # rospy.logdebug("Next node %s" % (next,))
 
                 # Find cost
@@ -183,18 +192,21 @@ class A_Star:
             frontier_to_display.append(map_helper.index2d_to_world(point, self.map))
 
         # Print debug
-        rospy.logdebug("Frontier list: %s " % frontier_list)
+        #rospy.logdebug("Frontier list: %s " % frontier_list)
 
         # Generate path
-        path = [map_helper.index2d_to_world(goal, self.map)]
+        self.unop_path = [map_helper.index2d_to_world(goal, self.map)]
         last_node = goal
         while came_from[last_node] is not None:
             next_node = came_from[last_node]
-            path.insert(0, map_helper.index2d_to_world(next_node, self.map))
+            self.unop_path.insert(0, map_helper.index2d_to_world(next_node, self.map))
             last_node = next_node
 
-        new_path = self.optimize_path(path)
-        rospy.logdebug("Path %s " % new_path)
+        if(len(self.unop_path) < 4):
+            raise Exception('Path is too short to safely navigate')
+
+        new_path = self.optimize_path(self.unop_path)
+        #rospy.logdebug("Path %s " % new_path)
 
         self.paint_wavefront(frontier_to_display)
 
@@ -345,18 +357,42 @@ class A_Star:
         horizon_path.header.frame_id = "/odom"
         horizon_path.poses.append(path.poses[0])
 
-        for idx in range(len(path.poses)-1):
-            dist = self.pose_distance(path.poses[idx], path.poses[idx+1])
+        for idx in range(len(path.poses) - 1):
+            dist = self.pose_distance(path.poses[idx], path.poses[idx + 1])
             traveled_dist += dist
             if traveled_dist < horizon_dist:
-                horizon_path.poses.append(path.poses[idx+1])
+                horizon_path.poses.append(path.poses[idx + 1])
             else:
                 remaining_dist = horizon_dist - traveled_dist
-                horizon_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
+                horizon_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx + 1], remaining_dist)
                 horizon_path.poses.append(horizon_pose)
                 break
 
         return horizon_path
+
+    def safe_path(self, path):
+        safe_dist = 0.2
+        safe_path = Path()
+        safe_path.header.frame_id = "/odom"
+        safe_path.poses.append(path.poses[0])
+
+        if self.pose_distance(path.poses[0], path.poses[len(path.poses)-1]) < safe_dist:
+            return Path()
+
+        for idx in range(len(path.poses)-1):
+            dist_next_to_end = self.pose_distance(path.poses[idx+1], path.poses[len(path.poses)-1])
+            if dist_next_to_end >= safe_dist:
+                safe_path.poses.append(path.poses[idx+1])
+            else:
+                dist_curr_to_end = self.pose_distance(path.poses[idx], path.poses[len(path.poses)-1])
+                remaining_dist = dist_curr_to_end - safe_dist
+                safe_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
+                safe_path.poses.append(safe_pose)
+                break
+
+        return safe_path
+
+
 
     def pose_btw_poses(self, start_pose, end_pose, dist):
         """
@@ -367,21 +403,12 @@ class A_Star:
         :return: PoseStamped()
         """
         intermediate_pose = PoseStamped()
-        intermediate_pose.header.frame_id = start_pose.header.frame_id
+        #intermediate_pose.header.frame_id = start_pose.header.frame_id
 
-        if(start_pose.pose.position.x == end_pose.pose.position.x and start_pose.pose.position.y < end_pose.pose.position.y):
-            intermediate_pose.pose.position.x = start_pose.pose.position.x
-            intermediate_pose.pose.position.y = start_pose.pose.position.y + dist
-        if(start_pose.pose.position.x == end_pose.pose.position.x and start_pose.pose.position.y > end_pose.pose.position.y):
-            intermediate_pose.pose.position.x = start_pose.pose.position.x
-            intermediate_pose.pose.position.y = start_pose.pose.position.y - dist
+        theta = math.atan2(end_pose.pose.position.y - start_pose.pose.position.y, end_pose.pose.position.x - start_pose.pose.position.x)
 
-        if (start_pose.pose.position.x < end_pose.pose.position.x and start_pose.pose.position.y == end_pose.pose.position.y):
-            intermediate_pose.pose.position.x = start_pose.pose.position.x + dist
-            intermediate_pose.pose.position.y = start_pose.pose.position.y
-        if (start_pose.pose.position.x > end_pose.pose.position.x and start_pose.pose.position.y == end_pose.pose.position.y):
-            intermediate_pose.pose.position.x = start_pose.pose.position.x - dist
-            intermediate_pose.pose.position.y = start_pose.pose.position.y
+        intermediate_pose.pose.position.x = start_pose.pose.position.x + dist * math.cos(theta)
+        intermediate_pose.pose.position.y = start_pose.pose.position.y + dist * math.sin(theta)
 
         return intermediate_pose
 
@@ -397,7 +424,7 @@ class A_Star:
         :param obstacles: list of tuples
         :return:
         """
-        rospy.logdebug("Painting Path")
+      #  rospy.logdebug("Painting Path")
         cells = map_helper.to_grid_cells(obstacles, self.map)
         self.waypoints_pub.publish(cells)
 
@@ -412,7 +439,7 @@ class A_Star:
 
 if __name__ == '__main__':
     astar = A_Star()
-    rospy.loginfo("Initializing A_Star")
+    #rospy.loginfo("Initializing A_Star")
 
     rate = rospy.Rate(1)
     rate.sleep()
