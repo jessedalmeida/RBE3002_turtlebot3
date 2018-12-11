@@ -36,12 +36,12 @@ class Robot:
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
 
     def handle_robot_nav(self, req):
+        # type: (RobotNav) -> bool
         """
         Handler for robot_nav service
         :param req: RobotNav request
         :return:
         """
-        # type: (RobotNav) -> bool
         rospy.logdebug(req)
         path = req.path
         # Determine if the orientation needs to be ignored
@@ -203,7 +203,7 @@ class Robot:
         start = yaw
 
         dest_ang = self.bounded_angle(start + angle)
-        rospy.loginfo("Turning angle: %f" % (angle))
+        # rospy.loginfo("Turning angle: %f" % (angle))
         error = self.bounded_angle(dest_ang - yaw)
 
         # Loop while not there yet

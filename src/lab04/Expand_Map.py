@@ -9,7 +9,7 @@ import copy
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid, GridCells, Odometry, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
-
+import cProfile
 
 class Expand_Map:
 
@@ -20,7 +20,7 @@ class Expand_Map:
         """
 
         # Initialize node
-        rospy.init_node("expand_map", log_level=rospy.INFO)
+        rospy.init_node("expand_map", log_level=rospy.DEBUG)
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
@@ -73,6 +73,59 @@ class Expand_Map:
         rospy.loginfo("Expansion complete: %s" % diff)
         return self.expanded_map
 
+    def expand(self):
+        """
+            Expand the map and return it
+            :param my_map: map
+            :return: map
+        """
+        rospy.logdebug("Expanding the map")
+
+        rospy.logdebug("Start Node: %s" % self.curr_position)
+        start_time = rospy.get_time()
+
+        self.walls_to_paint = set()
+        self.softwalls_to_paint = set()
+
+        self.expanded_map = copy.copy(self.map)
+        self.new_occupancy = list(self.expanded_map.data)
+        self.min_radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
+        self.max_radius = int(2 * math.ceil(self.robot_radius / self.map.info.resolution))
+
+        rospy.logdebug("Min: %s Max: %s" % (self.min_radius, self.max_radius))
+
+        useTime = 0
+
+        now = rospy.get_time()
+
+        # iterate through all
+        cells = self.map.data
+        len_cells = len(cells)
+
+        rospy.logdebug("Length %s" % len_cells)
+        for i in range(len(cells)):
+
+            rospy.logdebug_throttle(2, "%s of cells searched" % (i))
+            # paint around radius of a point of wall
+            if cells[i] == 100:
+                startPuff = rospy.get_time()
+                point = map_helper.index1d_to_index2d(i, self.map)
+                self.puff_point(point)
+                useTime += rospy.get_time() - startPuff
+
+            # if rospy.get_time() - now > 2:
+            #     now = rospy.get_time()
+            #     self.update_grids()
+
+        iterateTime = rospy.get_time() - start_time
+        rospy.logdebug("Iteration Time: %s" % (iterateTime))
+        rospy.logdebug("Puff Time: %s  Percentage used: %s" % (useTime, useTime / iterateTime))
+
+        rospy.logdebug("Publishing")
+        self.update_grids()
+
+        self.expanded_map.data = tuple(self.new_occupancy)
+
     def bfs_expand(self):
         """
         Start at current position and use bfs to only search the immediate map area
@@ -83,7 +136,7 @@ class Expand_Map:
         start = map_helper.world_to_index2d((self.curr_position.x, self.curr_position.y), self.map)
 
         rospy.logdebug("Start Node: %s" % self.curr_position)
-        now = rospy.get_time()
+        start_time = rospy.get_time()
 
         self.walls_to_paint = set()
         self.softwalls_to_paint = set()
@@ -95,9 +148,32 @@ class Expand_Map:
 
         useTime = 0
 
+        rospy.logdebug("Min: %s Max: %s" % (self.min_radius, self.max_radius))
+
+        # used = 0
+        # cells_len = len(self.new_occupancy)
+        # for i in range(cells_len):
+        #     val = self.new_occupancy[i]
+        #
+        #     if val != -1:
+        #         used += 1
+        #
+        # rospy.logdebug("Total Size: %s Usable Size: %s" %(cells_len, used))
+
+        cells_searched = 0
+
+        # usable_map_size = 25000 * (.05/self.map.info.resolution)**2
+
+        now = rospy.get_time()
+
         visited, queue = set(), [start]
         while queue:
             vertex = queue.pop(0)
+
+            cells_searched += 1
+
+            # rospy.logdebug_throttle(2, "Cells searched so far %s" % cells_searched)
+            # rospy.loginfo_throttle(1, "%.2f %% of the way through" % (cells_searched/used * 100))
             index1d = map_helper.index2d_to_index1d(vertex, self.map)
 
             if self.map.data[index1d] == 100:
@@ -116,18 +192,13 @@ class Expand_Map:
 
                 queue.extend(neighbors - visited)
 
-
-        iterateTime = rospy.get_time() - now
+        iterateTime = rospy.get_time() - start_time
         rospy.logdebug("Iteration Time: %s" % (iterateTime))
         rospy.logdebug("Puff Time: %s  Percentage used: %s" % (useTime, useTime/iterateTime))
 
 
         rospy.logdebug("Publishing")
-        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
-        self.pub_expanded_grid.publish(hard_grid)
-
-        soft_grid = map_helper.to_grid_cells(list(self.softwalls_to_paint), self.map)
-        self.pub_soft_expanded.publish(soft_grid)
+        self.update_grids()
 
         self.expanded_map.data = tuple(self.new_occupancy)
 
@@ -158,8 +229,6 @@ class Expand_Map:
                 new_value = max(curr_value, function_value)
                 self.new_occupancy[index_of_n] = new_value
 
-                # rospy.logdebug("Curr: %s Function: %s New: %s" % (curr_value, function_value, new_value))
-
                 worldpt = map_helper.index2d_to_world(n, self.map)
 
                 if new_value == 100:
@@ -189,15 +258,22 @@ class Expand_Map:
             # free space
             return 0
 
+    def update_grids(self):
+        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
+        self.pub_expanded_grid.publish(hard_grid)
+
+        soft_grid = map_helper.to_grid_cells(list(self.softwalls_to_paint), self.map)
+        self.pub_soft_expanded.publish(soft_grid)
+
+        return ""
 
     def get_map(self):
-        self.bfs_expand()
+        cProfile.runctx("self.bfs_expand()", globals(), locals())
+        # self.expand()
         pass
 
 
 if __name__ == '__main__':
     expanded = Expand_Map()
     rospy.spin()
-
-
     rospy.loginfo("Expanding the Map")
