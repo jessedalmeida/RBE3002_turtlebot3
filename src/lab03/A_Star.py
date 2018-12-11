@@ -174,7 +174,7 @@ class A_Star:
                 new_cost = cost_so_far[current] + self.move_cost(current, next)
                 if next not in cost_so_far or new_cost < cost_so_far[next]:
                     cost_so_far[next] = new_cost
-                    priority = new_cost + self.euclidean_heuristic(goal, next)
+                    priority = new_cost + self.heuristic(goal, next)
                     frontier.put(next, priority)
                     came_from[next] = current
 
@@ -206,15 +206,21 @@ class A_Star:
         self.paint_cells(frontier_list, new_path)
         self.points = new_path
 
-    def euclidean_heuristic(self, point1, point2):
+    def heuristic(self, point1, point2):
         """
             calculate the dist between two points
-            :param point1: tuple of location
-            :param point2: tuple of location
+            :param point1: tuple of goal location
+            :param point2: tuple of next location
             :return: dist between two points
         """
         #Pythagorian theorem
-        return map_helper.euclidean_distance(point1, point2)
+        euclidean = map_helper.euclidean_distance(point1, point2)
+
+        index1d = map_helper.index2d_to_index1d(point2, self.map)
+
+        occupied_val = float(self.map.data[index1d]/10.0)
+
+        return euclidean + occupied_val
 
     def move_cost(self, current, next):
         """

@@ -28,6 +28,7 @@ class Expand_Map:
 
         # Publishers
         self.pub_expanded_grid = rospy.Publisher("local_costmap/expanded", GridCells, queue_size=10)
+        self.pub_soft_expanded = rospy.Publisher("local_costmap/lessExpanded", GridCells, queue_size=10)
 
         # Setup service server
         rospy.Service('get_expanded_map', GetMap, self.handle_map)
@@ -37,7 +38,6 @@ class Expand_Map:
         self.rate = rospy.Rate(.5)
         self.robot_radius = .1
         self.first_run = True
-        self.cells_to_paint = []
 
         while self.map is None and not rospy.is_shutdown():
             pass
@@ -85,9 +85,14 @@ class Expand_Map:
         rospy.logdebug("Start Node: %s" % self.curr_position)
         now = rospy.get_time()
 
+        self.walls_to_paint = set()
+        self.softwalls_to_paint = set()
+
         self.expanded_map = copy.copy(self.map)
         self.new_occupancy = list(self.expanded_map.data)
-        self.radius = int(1.4 * math.ceil(self.robot_radius / self.map.info.resolution))
+        self.min_radius = int(math.ceil(self.robot_radius / self.map.info.resolution))
+        self.max_radius = int(2 * math.ceil(self.robot_radius / self.map.info.resolution))
+
         useTime = 0
 
         visited, queue = set(), [start]
@@ -118,8 +123,11 @@ class Expand_Map:
 
 
         rospy.logdebug("Publishing")
-        grid = map_helper.to_grid_cells(self.cells_to_paint, self.map)
-        self.pub_expanded_grid.publish(grid)
+        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
+        self.pub_expanded_grid.publish(hard_grid)
+
+        soft_grid = map_helper.to_grid_cells(list(self.softwalls_to_paint), self.map)
+        self.pub_soft_expanded.publish(soft_grid)
 
         self.expanded_map.data = tuple(self.new_occupancy)
 
@@ -133,7 +141,7 @@ class Expand_Map:
 
         visit = map_helper.get_neighbors(point, self.map)
 
-        while steps_out < self.radius and not rospy.is_shutdown():
+        while steps_out < self.max_radius and not rospy.is_shutdown():
             neighbors_to_expand = visit
             visit = []
 
@@ -142,17 +150,45 @@ class Expand_Map:
             for n in neighbors_to_expand:
                 index_of_n = map_helper.index2d_to_index1d(n, self.map)
 
-                self.new_occupancy[index_of_n] = 100
+                curr_value = self.new_occupancy[index_of_n]
+                function_value = self.antigrav_expansion(steps_out)
+
+                # graph takes in max between the original value and the newly calculated value
+                # only really affects cases of overlap
+                new_value = max(curr_value, function_value)
+                self.new_occupancy[index_of_n] = new_value
+
+                # rospy.logdebug("Curr: %s Function: %s New: %s" % (curr_value, function_value, new_value))
+
                 worldpt = map_helper.index2d_to_world(n, self.map)
-                self.cells_to_paint.append(worldpt)
+
+                if new_value == 100:
+                    self.walls_to_paint.add(worldpt)
+                elif 0 < new_value and new_value < 100:
+                    self.softwalls_to_paint.add(worldpt)
+
                 visit = visit + map_helper.get_neighbors(n, self.map)
 
-    def remove_duplicates(self, list):
-        final_list = []
-        for point in list:
-            if point not in final_list:
-                final_list.append(point)
-        return final_list
+    def antigrav_expansion(self, step):
+        """
+        function applied to steps out to determine the value of the occupany grid
+
+        :param step:
+        :return:
+        """
+        min = self.min_radius
+        max = self.max_radius + 1
+
+        if step <= min:
+            # returns wall so that robot absolutely does not go in here
+            return 100
+        elif step > min and step < max:
+            # linear function to deter robot from walls
+            return int(-100/(max - min) * (step - min) + 100)
+        else:
+            # free space
+            return 0
+
 
     def get_map(self):
         self.bfs_expand()
