@@ -5,7 +5,7 @@
   <arg name="z_pos" default="0.05"/>
   <arg name="maze" default="maze2"/>
 
-  <include file="$(find rbe3002_template)/launch/maze_sim.launch">
+  <include file="$(find rbe3002)/launch/maze_sim.launch">
     <arg name="model" value="$(arg model)"/>
     <arg name="x_pos" value="$(arg x_pos)"/>
     <arg name="y_pos" value="$(arg y_pos)"/>
@@ -14,6 +14,6 @@
   </include>
 
   <!-- Turtlebot3  -->
-  <include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch" />
+  <!--<include file="$(find turtlebot3_bringup)/launch/turtlebot3_remote.launch" />-->
 
 </launch>

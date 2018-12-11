@@ -106,23 +106,28 @@ class Controller:
         return done_exploring
 
     def state_machine(self, state):
-        if(state == "Explore"):
-            rospy.logdebug("In Explore State")
-            while not rospy.is_shutdown() and not self.explore():
+        rate = rospy.Rate(20)
+        last_state = state
+        while not rospy.is_shutdown():
+            rate.sleep()
+            if state != last_state:
+                rospy.logdebug("In %s State" % state)
+                last_state = state
+
+            if (state == "Explore"):
+                if self.explore():
+                    self.save_map()
+                    state = "Home"
+            if (state == "Home"):
+                self.nav_to_point(self.start_pose)
+                state = "Travel"
+            if (state == "Travel"):
                 pass
-            self.save_map()
-            state = "Home"
-        if(state == "Home"):
-            rospy.logdebug("In Home State")
-            self.nav_to_point(self.start_pose)
-            state = "Travel"
-        if(state == "Travel"):
-            rospy.logdebug("In Travel State")
-            while not rospy.is_shutdown():
-                pass
+
 
     def save_map(self):
         os.system("rosrun map_server map_saver -f maps/made_map")
+
 
 if __name__ == '__main__':
     controller = Controller()

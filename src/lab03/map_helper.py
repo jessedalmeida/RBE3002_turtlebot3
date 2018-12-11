@@ -54,12 +54,19 @@ def get_neighbors_8count(index2d, my_map, occupation=0):
     x_index = index2d[0]
     y_index = index2d[1]
 
+    if occupation is None:
+        min_val = 0
+        max_val = 99
+    else:
+        min_val = occupation
+        max_val = occupation
+
     for dx in range(-1, 2):
         for dy in range(-1, 2):
-            if is_valid_index2d((x_index + dx, y_index + dy), my_map, occupation) and not (dx==0 and dy ==0):
-                neighbor_n = (x_index + dx, y_index + dy)
-                list_of_neighbors.append(neighbor_n)
-
+            neighbor = (x_index + dx, y_index + dy)
+            contents = cell_occupation(neighbor, my_map)
+            if contents is not None and min_val <= contents <= max_val and not (dx==0 and dy ==0):
+                list_of_neighbors.append(neighbor)
     return list_of_neighbors
 
 

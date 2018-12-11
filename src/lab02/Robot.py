@@ -26,7 +26,7 @@ class Robot:
         Set up the node here
         """
         # Init node
-        rospy.init_node('robot_drive_controller', log_level=rospy.INFO)
+        rospy.init_node('robot_drive_controller', log_level=rospy.DEBUG)
         # Setup ros publishers
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         # Setup subscribers
