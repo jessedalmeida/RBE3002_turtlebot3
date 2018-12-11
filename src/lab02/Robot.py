@@ -203,7 +203,7 @@ class Robot:
         start = yaw
 
         dest_ang = self.bounded_angle(start + angle)
-        rospy.loginfo("Turning angle: %f" % (angle))
+        # rospy.loginfo("Turning angle: %f" % (angle))
         error = self.bounded_angle(dest_ang - yaw)
 
         # Loop while not there yet
