@@ -67,6 +67,7 @@ class Controller:
 
         rospy.loginfo("Expanding Map and Updating Frontiers")
         frontier_request_response = self.frontier_request()
+        rospy.loginfo("Found Frontiers")
         map = frontier_request_response.map
         frontiers = frontier_request_response.frontiers
 

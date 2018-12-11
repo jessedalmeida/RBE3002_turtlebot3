@@ -1,7 +1,9 @@
 <launch>
     <arg name="output" value="log"/>
-  <include file="$(find turtlebot3_slam)/launch/turtlebot3_gmapping.launch">
-  </include>
+  <!--<include file="$(find turtlebot3_slam)/launch/turtlebot3_gmapping.launch">-->
+  <!--</include>-->
+
+  <node name="silent_gmapping" pkg="rbe3002" type="run_gmapping.sh" output="log"/>
 
   <arg name="model" default="$(env TURTLEBOT3_MODEL)" doc="model type [burger, waffle, waffle_pi]"/>
 
