@@ -11,7 +11,7 @@ from nav_msgs.msg import OccupancyGrid, GridCells, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
 
 
-def get_neighbors(index2d, my_map, occupation=0):
+def get_neighbors(index2d, my_map, occupation=None):
     """
         returns the legal neighbors of index2d
         :param index2d: tuple of index in 2d grid cells
@@ -25,22 +25,18 @@ def get_neighbors(index2d, my_map, occupation=0):
     x_index = index2d[0]
     y_index = index2d[1]
 
-    if is_valid_index2d((x_index, y_index - 1), my_map, occupation):
-        neighbor_n = (x_index, y_index - 1)
-        list_of_neighbors.append(neighbor_n)
+    if occupation is None:
+        min_val = 0
+        max_val = 99
+    else:
+        min_val = occupation
+        max_val = occupation
 
-    if is_valid_index2d((x_index + 1, y_index), my_map, occupation):
-        neighbor_e = (x_index + 1, y_index)
-        list_of_neighbors.append(neighbor_e)
-
-    if is_valid_index2d((x_index, y_index + 1), my_map, occupation):
-        neighbor_s = (x_index, y_index + 1)
-        list_of_neighbors.append(neighbor_s)
-
-    if is_valid_index2d((x_index - 1, y_index), my_map, occupation):
-        neighbor_w = (x_index - 1, y_index)
-        list_of_neighbors.append(neighbor_w)
-
+    for dx, dy in [(1, 0), (0, 1), (-1, 0), (0, -1)]:
+        neighbor = (x_index + dx, y_index + dy)
+        contents = cell_occupation(neighbor, my_map)
+        if contents is not None and min_val <= contents <= max_val:
+            list_of_neighbors.append(neighbor)
     return list_of_neighbors
 
 
@@ -58,8 +54,8 @@ def get_neighbors_8count(index2d, my_map, occupation=0):
     x_index = index2d[0]
     y_index = index2d[1]
 
-    for dx in range(-1,2):
-        for dy in range(-1,2):
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
             if is_valid_index2d((x_index + dx, y_index + dy), my_map, occupation) and not (dx==0 and dy ==0):
                 neighbor_n = (x_index + dx, y_index + dy)
                 list_of_neighbors.append(neighbor_n)
@@ -72,7 +68,6 @@ def get_neighbors_bfs(index2d, my_map):
         returns the legal neighbors in 8count of index2d, including walls
         :param index2d: tuple of index in 2d grid cells
         :param my_map: 1d map array
-        :param occupation: only returns if occupation matches the cell contents
         :return: list of tuples
     """
 
@@ -81,11 +76,10 @@ def get_neighbors_bfs(index2d, my_map):
     x_index = index2d[0]
     y_index = index2d[1]
 
-    for dx in range(-1,2):
-        for dy in range(-1,2):
-            isWall = is_valid_index2d((x_index + dx, y_index + dy), my_map, 100)
-            isFree = is_valid_index2d((x_index + dx, y_index + dy), my_map, 0)
-            if (isWall or isFree) and not (dx == 0 and dy == 0):
+    for dx in range(-1, 2):
+        for dy in range(-1, 2):
+            cell = cell_occupation((x_index + dx, y_index + dy), my_map)
+            if cell is not None and cell >= 0 and not (dx == 0 and dy == 0):
                 neighbor_n = (x_index + dx, y_index + dy)
                 list_of_neighbors.append(neighbor_n)
 
@@ -93,6 +87,12 @@ def get_neighbors_bfs(index2d, my_map):
 
 
 def get_closest_open(index2d, my_map):
+    """
+    Finds the closest open space cell
+    :param index2d:
+    :param my_map:
+    :return:
+    """
     visited, queue = set(), [index2d]
     done = False
     while not done and queue:
@@ -133,6 +133,23 @@ def is_valid_index2d(index2d, my_map, occupation=0):
         return True
     else:
         return False
+
+
+def cell_occupation(index2d, my_map):
+    """
+        Contents of cell
+        :param index2d: tuple of location
+        :param my_map: 1d map array
+        :return: None if invalid, value of cell if valid
+    """
+    x_index = index2d[0]
+    y_index = index2d[1]
+
+    if x_index < 0 or x_index >= my_map.info.width or y_index < 0 or y_index >= my_map.info.height:
+        return None
+
+    cell_val = my_map.data[index2d_to_index1d(index2d, my_map)]
+    return cell_val
 
 
 def world_to_index2d(loc, my_map):
