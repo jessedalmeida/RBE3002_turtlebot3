@@ -122,7 +122,7 @@ class Controller:
                 pass
 
     def save_map(self):
-        os.system("rosrun map_server map_saver -f made_map")
+        os.system("rosrun map_server map_saver -f maps/made_map")
 
 if __name__ == '__main__':
     controller = Controller()
