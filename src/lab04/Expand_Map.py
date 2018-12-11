@@ -20,7 +20,7 @@ class Expand_Map:
         """
 
         # Initialize node
-        rospy.init_node("expand_map", log_level=rospy.DEBUG)
+        rospy.init_node("expand_map", log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
