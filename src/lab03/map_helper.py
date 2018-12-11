@@ -99,7 +99,7 @@ def get_closest_open(index2d, my_map):
         vertex = queue.pop(0)
         index1d = index2d_to_index1d(vertex, my_map)
 
-        if my_map.data[index1d] == 0:
+        if my_map.data[index1d] != 100:
             return vertex
 
         if vertex not in visited:

@@ -18,7 +18,7 @@ class Controller:
         rospy.loginfo("Initializing Controller")
 
         # Initialize node
-        rospy.init_node('controller', log_level=rospy.INFO)
+        rospy.init_node('controller', log_level=rospy.DEBUG)
 
         # Subscribers
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
@@ -33,9 +33,6 @@ class Controller:
         self.goal = PoseStamped()
 
         self.pose = None
-
-        rate = rospy.Rate(3000)
-        rate.sleep()
 
         while(self.pose is None):
             rospy.sleep(20)
@@ -110,27 +107,22 @@ class Controller:
 
     def state_machine(self, state):
         if(state == "Explore"):
+            rospy.logdebug("In Explore State")
             while not rospy.is_shutdown() and not self.explore():
                 pass
             self.save_map()
             state = "Home"
         if(state == "Home"):
-            while not rospy.is_shutdown() and not self.home():
-                pass
+            rospy.logdebug("In Home State")
+            self.nav_to_point(self.start_pose)
             state = "Travel"
         if(state == "Travel"):
+            rospy.logdebug("In Travel State")
             while not rospy.is_shutdown():
-                self.travel()
+                pass
 
     def save_map(self):
-        command = "rosrun map_server map_saver -f <made_map>"
-        os.system(command)
-
-    def home(self):
-        return False
-
-    def travel(self):
-        pass
+        os.system("rosrun map_server map_saver -f made_map")
 
 if __name__ == '__main__':
     controller = Controller()

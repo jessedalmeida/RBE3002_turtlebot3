@@ -36,12 +36,12 @@ class Robot:
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
 
     def handle_robot_nav(self, req):
+        # type: (RobotNav) -> bool
         """
         Handler for robot_nav service
         :param req: RobotNav request
         :return:
         """
-        # type: (RobotNav) -> bool
         rospy.logdebug(req)
         path = req.path
         # Determine if the orientation needs to be ignored
