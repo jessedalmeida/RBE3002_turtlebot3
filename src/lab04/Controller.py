@@ -33,8 +33,12 @@ class Controller:
 
         rate = rospy.Rate(3000)
         rate.sleep()
-        while not rospy.is_shutdown() and not self.explore():
-            pass
+
+        while(self.pose is None):
+            rospy.sleep(20)
+        self.start_pose = self.pose
+
+        self.state_machine("Explore")
 
     def odom_callback(self, msg):
         # type: (Odometry) -> None
@@ -101,6 +105,29 @@ class Controller:
             rospy.loginfo("Done Exploring")
         return done_exploring
 
+    def state_machine(self, state):
+        if(state == "Explore"):
+            while not rospy.is_shutdown() and not self.explore():
+                pass
+            self.save_map()
+            state = "Home"
+        if(state == "Home"):
+            while not rospy.is_shutdown() and not self.home():
+                pass
+            state = "Travel"
+        if(state == "Travel"):
+            while not rospy.is_shutdown():
+                self.travel()
+
+    def save_map(self):
+        command = "rosrun map_server map_saver -f <made_map>"
+        os.system(command)
+
+    def home(self):
+        return False
+
+    def travel(self):
+        pass
 
 if __name__ == '__main__':
     controller = Controller()

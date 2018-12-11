@@ -377,6 +377,7 @@ class A_Star:
         safe_path.poses.append(path.poses[0])
 
         if self.pose_distance(path.poses[0], path.poses[len(path.poses)-1]) < safe_dist:
+            # raise Exception('Starting too close to end to safely navigate')
             return Path()
 
         for idx in range(len(path.poses)-1):
@@ -386,6 +387,8 @@ class A_Star:
             else:
                 dist_curr_to_end = self.pose_distance(path.poses[idx], path.poses[len(path.poses)-1])
                 remaining_dist = dist_curr_to_end - safe_dist
+                if remaining_dist < 0:
+                    break
                 safe_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
                 safe_path.poses.append(safe_pose)
                 break
