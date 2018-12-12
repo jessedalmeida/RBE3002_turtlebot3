@@ -6,6 +6,7 @@ from tf.transformations import euler_from_quaternion
 from rbe3002.srv import MakePath, RobotNav, FrontierRequest
 import sys
 import os
+import tf
 sys.path.append(os.path.join(os.path.dirname(__file__), '..', 'lab03'))
 import map_helper
 
@@ -28,6 +29,8 @@ class Controller:
         self.robot_nav = rospy.ServiceProxy('robot_nav', RobotNav)
         self.frontier_request = rospy.ServiceProxy('get_frontiers', FrontierRequest)
 
+        self.listener = tf.TransformListener()
+
         self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_point)
 
         self.goal = PoseStamped()
@@ -49,7 +52,10 @@ class Controller:
         """
         position = msg.pose.pose.position
         new_pose = PoseStamped()
-        new_pose.pose.position = position
+        (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+        new_pose.pose.position.x = trans[0]
+        new_pose.pose.position.y = trans[1]
+
         self.pose = new_pose
 
     def nav_to_point(self, goal):
