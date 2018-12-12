@@ -40,7 +40,7 @@ def get_neighbors(index2d, my_map, occupation=None):
     return list_of_neighbors
 
 
-def get_neighbors_8count(index2d, my_map, occupation=None):
+def get_neighbors_8count(index2d, my_map, occupation="Nav"):
     """
         returns the legal neighbors in 8count of index2d
         :param index2d: tuple of index in 2d grid cells
@@ -54,9 +54,12 @@ def get_neighbors_8count(index2d, my_map, occupation=None):
     x_index = index2d[0]
     y_index = index2d[1]
 
-    if occupation is None:
+    if occupation == "Nav":
         min_val = 0
         max_val = 99
+    elif occupation == "0+":
+        min_val = 0
+        max_val = 100
     else:
         min_val = occupation
         max_val = occupation
@@ -106,12 +109,12 @@ def get_closest_open(index2d, my_map):
         vertex = queue.pop(0)
         index1d = index2d_to_index1d(vertex, my_map)
 
-        if my_map.data[index1d] != 100:
+        if 0 <= my_map.data[index1d] < 100:
             return vertex
 
         if vertex not in visited:
             visited.add(vertex)
-            neighbors = get_neighbors_bfs(vertex, my_map)
+            neighbors = get_neighbors_8count(vertex, my_map, "0+")
 
             if neighbors is None:
                 neighbors = set()
