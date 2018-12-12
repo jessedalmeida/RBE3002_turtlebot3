@@ -271,13 +271,12 @@ class Expand_Map:
             return 0
 
     def update_grids(self):
-        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
-        self.pub_expanded_grid.publish(hard_grid)
 
         soft_grid = map_helper.to_grid_cells(list(self.softwalls_to_paint), self.map)
         self.pub_soft_expanded.publish(soft_grid)
 
-        return ""
+        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
+        self.pub_expanded_grid.publish(hard_grid)
 
     def get_map(self):
         # cProfile.runctx("self.bfs_expand()", globals(), locals())
