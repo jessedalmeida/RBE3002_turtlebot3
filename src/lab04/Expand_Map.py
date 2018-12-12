@@ -244,7 +244,11 @@ class Expand_Map:
                     worldpt = map_helper.index2d_to_world(n, self.map)
 
                     if new_value == 100:
+                        if worldpt in self.softwalls_to_paint:
+                            self.softwalls_to_paint.remove(worldpt)
+
                         self.walls_to_paint.add(worldpt)
+
                     elif 0 < new_value and new_value < 100:
                         self.softwalls_to_paint.add(worldpt)
 
