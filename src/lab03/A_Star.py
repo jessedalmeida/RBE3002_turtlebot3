@@ -69,15 +69,15 @@ class A_Star:
             safe_path = self.safe_path(path)
 
             # Path until horizon
-            horiz_path = self.horizon_path(safe_path)
+            horiz_path = self.horizon_path(path)
 
             return_path = horiz_path
             success = True
             if (len(return_path.poses) == 0):
                 success = False
-
-            if (self.pose_distance(return_path.poses[0],return_path.poses[len(return_path.poses)-1]) < 0.1):
-                success = False
+            #
+            # if (self.pose_distance(return_path.poses[0],return_path.poses[len(return_path.poses)-1]) < 0.1):
+            #     success = False
         except Exception as e:
             rospy.logdebug("Failed to find path")
             rospy.logdebug(e)
