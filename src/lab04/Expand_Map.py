@@ -6,6 +6,7 @@ import rospy
 import math
 import map_helper
 import copy
+import tf
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid, GridCells, Odometry, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
@@ -33,6 +34,8 @@ class Expand_Map:
         # Setup service server
         rospy.Service('get_expanded_map', GetMap, self.handle_map)
 
+        self.listener = tf.TransformListener()
+
         # Consts
         self.map = OccupancyGrid()
         self.rate = rospy.Rate(.5)
@@ -58,7 +61,14 @@ class Expand_Map:
         :type msg: Odom
         :return:
         """
-        self.curr_position = msg.pose.pose.position
+        # self.curr_position = msg.pose.pose.position
+
+        new_pose = PoseStamped() #TODO commend this section out
+        (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+        new_pose.pose.position.x = trans[0]
+        new_pose.pose.position.y = trans[1]
+
+        self.curr_position = new_pose.pose.position
 
     def handle_map(self, req):
         """

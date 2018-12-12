@@ -311,16 +311,17 @@ class Robot:
         self.py = trans[1]
         euler = tf.transformations.euler_from_quaternion(rot)
         self.yaw = euler[2]
-        (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
-        self.px = msg.pose.pose.position.x
-        self.py = msg.pose.pose.position.y
-        self.quat = [0] * 4
-        self.quat[0] = msg.pose.pose.orientation.x
-        self.quat[1] = msg.pose.pose.orientation.y
-        self.quat[2] = msg.pose.pose.orientation.z
-        self.quat[3] = msg.pose.pose.orientation.w
-        euler = tf.transformations.euler_from_quaternion(self.quat)
-        self.yaw = euler[2]
+
+        # (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+        # self.px = msg.pose.pose.position.x
+        # self.py = msg.pose.pose.position.y
+        # self.quat = [0] * 4
+        # self.quat[0] = msg.pose.pose.orientation.x
+        # self.quat[1] = msg.pose.pose.orientation.y
+        # self.quat[2] = msg.pose.pose.orientation.z
+        # self.quat[3] = msg.pose.pose.orientation.w
+        # euler = tf.transformations.euler_from_quaternion(self.quat)
+        # self.yaw = euler[2]
 
 
 if __name__ == '__main__':

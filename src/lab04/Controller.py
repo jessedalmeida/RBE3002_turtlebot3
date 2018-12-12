@@ -88,12 +88,12 @@ class Controller:
             path_response = self.make_path(self.pose, frontier, map)
             # rospy.logdebug("Response: %s" % path_response)
             # rospy.logdebug("Successful path: %s" % path_response.success)
-            rospy.logdebug("Potential Path points: ")
-            for pose in path_response.path.poses:
-                rospy.logdebug(pose.pose.position)
-            rospy.loginfo("Potential Horizon Path points: ")
-            for pose in path_response.horiz_path.poses:
-                rospy.logdebug(pose.pose.position)
+            # rospy.logdebug("Potential Path points: ")
+            # for pose in path_response.path.poses:
+            #     rospy.logdebug(pose.pose.position)
+            # rospy.loginfo("Potential Horizon Path points: ")
+            # for pose in path_response.horiz_path.poses:
+            #     rospy.logdebug(pose.pose.position)
             if path_response.success and len(path_response.path.poses) > 4:
                 path_found = True
                 path_poses = path_response.horiz_path.poses

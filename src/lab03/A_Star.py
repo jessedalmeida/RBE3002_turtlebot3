@@ -345,14 +345,14 @@ class A_Star:
             # Generate pose
             pose = PoseStamped()
             # Mark frame
-            pose.header.frame_id = "/odom"
+            pose.header.frame_id = "/map" #TODO
             # Populate pose
             pose.pose.position.x = point[0]
             pose.pose.position.y = point[1]
             path_poses += [pose]
         # Make path message
         path = Path()
-        path.header.frame_id = "/odom"
+        path.header.frame_id = "/map" #TODO
         path.poses = path_poses
         # Publish to rviz
         self.path_pub.publish(path)

@@ -41,6 +41,8 @@ class FrontierFinder:
         # Setup service server
         rospy.Service('get_frontiers', FrontierRequest, self.handle_get_frontier)
 
+        self.listener = tf.TransformListener()
+
     def handle_get_frontier(self, req):
         # type: (None) -> (OccupancyGrid, list)
         """
@@ -109,9 +111,22 @@ class FrontierFinder:
         :type msg: Odom
         :return:
         """
-        position = msg.pose.pose.position
+        # position = msg.pose.pose.position
+        # new_pose = PoseStamped()
+        # new_pose.pose.position = position
+        # coords = (position.x, position.y)
+        # if self.map and self.map.info.resolution:
+        #     self.position = map_helper.world_to_index2d(coords, self.map)
+        #
+        # self.world_position = position
+
         new_pose = PoseStamped()
-        new_pose.pose.position = position
+
+        (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+        new_pose.pose.position.x = trans[0]
+        new_pose.pose.position.y = trans[1]
+        position = new_pose.pose.position
+
         coords = (position.x, position.y)
         if self.map and self.map.info.resolution:
             self.position = map_helper.world_to_index2d(coords, self.map)
