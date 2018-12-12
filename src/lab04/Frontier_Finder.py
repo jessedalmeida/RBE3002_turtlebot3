@@ -93,12 +93,12 @@ class FrontierFinder:
         rospy.logdebug(robot)
 
         # Guess closest
-        shortest_distance = map_helper.euclidean_distance(points[0], robot)
+        shortest_distance = self.cell_distance[points[0]]
         closest = points[0]
 
         # Find closest
         for point in points:
-            dist = map_helper.euclidean_distance(point, robot)
+            dist = self.cell_distance[point]
             if dist < shortest_distance:
                 shortest_distance = dist
                 closest = point
@@ -156,6 +156,8 @@ class FrontierFinder:
         :return: dictionary where keys are the point tuples and values are one element arrays of the same frontier point
         """
         frontier = {}
+        self.cell_distance = {}
+        count = 0
         start = map_helper.world_to_index2d((self.world_position.x, self.world_position.y), self.map)
 
         visited, queue = set(), [start]
@@ -167,6 +169,8 @@ class FrontierFinder:
             if 0 <= self.map.data[index1d] < 100:
                 if map_helper.get_neighbors(vertex, self.map, -1):  # Checks if there are unknown neighbors
                     frontier[vertex] = [vertex]
+                    self.cell_distance[vertex] = count
+                    count += 1
 
             if vertex not in visited:
                 visited.add(vertex)
