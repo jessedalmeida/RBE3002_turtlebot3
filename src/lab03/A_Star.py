@@ -242,7 +242,9 @@ class A_Star:
               :param next: tuple of location
               :return: dist between two points
         """
-        return self.straight_line_dist(current, next)
+        index1d = map_helper.index2d_to_index1d(next, self.map)
+        occupied_val = float(self.map.data[index1d]/10.0)
+        return self.straight_line_dist(current, next) + occupied_val
 
     def straight_line_dist(self, current, next):
         """
