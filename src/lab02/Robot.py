@@ -26,7 +26,7 @@ class Robot:
         Set up the node here
         """
         # Init node
-        rospy.init_node('robot_drive_controller', log_level=rospy.DEBUG)
+        rospy.init_node('robot_drive_controller', log_level=rospy.INFO)
         # Setup ros publishers
         self.pub = rospy.Publisher('cmd_vel', Twist, queue_size=10)
         # Setup subscribers
@@ -115,7 +115,7 @@ class Robot:
         if rospy.is_shutdown() or abs(distToGoal) < .03:
             cmd = Twist()
             self.pub.publish(cmd)
-            rospy.loginfo("Done turning")
+            rospy.loginfo("Reached point")
             return 0
         return distToGoal
 

@@ -57,7 +57,10 @@ class Controller:
         map = frontier_request_response.map
         path_response = self.make_path(self.pose, goal, map)
         if path_response.success:
+            rospy.loginfo("Navigating to target")
             self.robot_nav(path_response.path)
+        else:
+            rospy.logwarn("No path found")
 
     def explore(self):
 
@@ -79,13 +82,13 @@ class Controller:
             path_response = self.make_path(self.pose, frontier, map)
             # rospy.logdebug("Response: %s" % path_response)
             # rospy.logdebug("Successful path: %s" % path_response.success)
-            rospy.loginfo("Potential Path points: ")
+            rospy.logdebug("Potential Path points: ")
             for pose in path_response.path.poses:
-                rospy.loginfo(pose.pose.position)
+                rospy.logdebug(pose.pose.position)
             rospy.loginfo("Potential Horizon Path points: ")
             for pose in path_response.horiz_path.poses:
-                rospy.loginfo(pose.pose.position)
-            if path_response.success:
+                rospy.logdebug(pose.pose.position)
+            if path_response.success and len(path_response.path.poses) > 4:
                 path_found = True
                 path_poses = path_response.horiz_path.poses
                 #rospy.logdebug("Successful, going to path %s" % path_response.horiz_path.poses)

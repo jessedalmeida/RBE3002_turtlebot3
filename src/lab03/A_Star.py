@@ -60,29 +60,30 @@ class A_Star:
         self.create_map(req.map)
         # rospy.logdebug("Start: %s" % start)
         # rospy.logdebug("Goal: %s" % goal)
-        # try:
-        self.paint_point(start, goal)
-        # Path from list of points
-        path = self.publish_path(self.points)
+        try:
+            self.paint_point(start, goal)
+            # Path from list of points
+            path = self.publish_path(self.points)
 
-        # Safe path
-        safe_path = self.safe_path(path)
+            # Safe path
+            safe_path = self.safe_path(path)
 
-        # Path until horizon
-        horiz_path = self.horizon_path(safe_path)
+            # Path until horizon
+            horiz_path = self.horizon_path(safe_path)
 
-        return_path = horiz_path
-        success = True
-        if (len(return_path.poses) == 0):
+            return_path = horiz_path
+            success = True
+            if (len(return_path.poses) == 0):
+                success = False
+
+            if (self.pose_distance(return_path.poses[0],return_path.poses[len(return_path.poses)-1]) < 0.1):
+                success = False
+        except Exception as e:
+            rospy.logdebug("Failed to find path")
+            rospy.logdebug(e)
+            path = Path()
+            return_path = Path()
             success = False
-        # if (self.pose_distance(return_path.poses[0],return_path.poses[len(return_path.poses)-1]) < 0.1):
-        # success = False
-        # except Exception as e:
-        #     rospy.logdebug("Failed to find path")
-        #     rospy.logdebug(e)
-        #     path = Path()
-        #     return_path = Path()
-        #     success = False
 
         # Return path and horizon path in service call
         return path, return_path, success
@@ -206,8 +207,8 @@ class A_Star:
             self.unop_path.insert(0, map_helper.index2d_to_world(next_node, self.map))
             last_node = next_node
 
-        if(len(self.unop_path) < 4):
-            raise Exception('Path is too short to safely navigate')
+        # if(len(self.unop_path) < 4):
+        #     raise Exception('Path is too short to safely navigate')
 
         new_path = self.optimize_path(self.unop_path)
         #rospy.logdebug("Path %s " % new_path)

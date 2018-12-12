@@ -40,7 +40,7 @@ def get_neighbors(index2d, my_map, occupation=None):
     return list_of_neighbors
 
 
-def get_neighbors_8count(index2d, my_map, occupation=0):
+def get_neighbors_8count(index2d, my_map, occupation=None):
     """
         returns the legal neighbors in 8count of index2d
         :param index2d: tuple of index in 2d grid cells
