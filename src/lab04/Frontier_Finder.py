@@ -148,8 +148,8 @@ class FrontierFinder:
             vertex = queue.pop(0)
             index1d = map_helper.index2d_to_index1d(vertex, self.map)
 
-            # if occupied
-            if self.map.data[index1d] == 0:
+            # if unoccupied
+            if self.map.data[index1d] != 100:
                 if map_helper.get_neighbors(vertex, self.map, -1):  # Checks if there are unknown neighbors
                     frontier[vertex] = [vertex]
 

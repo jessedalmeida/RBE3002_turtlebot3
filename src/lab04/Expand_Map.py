@@ -216,8 +216,6 @@ class Expand_Map:
 
         self.puffed_dict[point] = steps_out
 
-        x = 1
-
         while steps_out < self.max_radius and not rospy.is_shutdown():
             neighbors_to_expand = visit
             visit = []
