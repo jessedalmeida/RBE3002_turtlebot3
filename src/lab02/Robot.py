@@ -12,6 +12,7 @@ from geometry_msgs.msg import Twist
 from nav_msgs.msg import Odometry, Path
 from tf.transformations import euler_from_quaternion
 from rbe3002.srv import RobotNav
+import tf
 
 
 def clamp(val, min_val=-.07, max_val=.07):
@@ -34,6 +35,8 @@ class Robot:
         # self.sub_goal = rospy.Subscriber("move_base_simple/goal", PoseStamped, self.nav_to_pose)
         # Setup service client
         self.srv_nav = rospy.Service("robot_nav", RobotNav, self.handle_robot_nav)
+        # Setup listener
+        self.listener = tf.TransformListener()
 
     def handle_robot_nav(self, req):
         # type: (RobotNav) -> bool
@@ -303,6 +306,12 @@ class Robot:
         :type msg: Odom
         :return:
         """
+        (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
+        self.px = trans[0]
+        self.py = trans[1]
+        euler = tf.transformations.euler_from_quaternion(rot)
+        self.yaw = euler[2]
+        (trans, rot) = self.listener.lookupTransform('/map', '/base_footprint', rospy.Time(0))
         self.px = msg.pose.pose.position.x
         self.py = msg.pose.pose.position.y
         self.quat = [0] * 4
