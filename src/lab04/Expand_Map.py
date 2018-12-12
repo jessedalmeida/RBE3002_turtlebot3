@@ -9,7 +9,7 @@ import copy
 from nav_msgs.srv import GetMap
 from nav_msgs.msg import OccupancyGrid, GridCells, Odometry, Path, MapMetaData
 from geometry_msgs.msg import Point, PoseWithCovarianceStamped, PoseStamped, PoseArray, Pose
-import cProfile
+# import cProfile
 
 class Expand_Map:
 
@@ -138,6 +138,8 @@ class Expand_Map:
         rospy.logdebug("Start Node: %s" % self.curr_position)
         start_time = rospy.get_time()
 
+        self.puffed_dict = {}
+
         self.walls_to_paint = set()
         self.softwalls_to_paint = set()
 
@@ -212,6 +214,10 @@ class Expand_Map:
 
         visit = map_helper.get_neighbors(point, self.map)
 
+        self.puffed_dict[point] = steps_out
+
+        x = 1
+
         while steps_out < self.max_radius and not rospy.is_shutdown():
             neighbors_to_expand = visit
             visit = []
@@ -219,24 +225,30 @@ class Expand_Map:
             steps_out += 1
 
             for n in neighbors_to_expand:
-                index_of_n = map_helper.index2d_to_index1d(n, self.map)
 
-                curr_value = self.new_occupancy[index_of_n]
-                function_value = self.antigrav_expansion(steps_out)
+                if n in self.puffed_dict and self.puffed_dict[n] < steps_out:
+                    continue
+                else:
+                    self.puffed_dict[n] = steps_out
 
-                # graph takes in max between the original value and the newly calculated value
-                # only really affects cases of overlap
-                new_value = max(curr_value, function_value)
-                self.new_occupancy[index_of_n] = new_value
+                    index_of_n = map_helper.index2d_to_index1d(n, self.map)
 
-                worldpt = map_helper.index2d_to_world(n, self.map)
+                    curr_value = self.new_occupancy[index_of_n]
+                    function_value = self.antigrav_expansion(steps_out)
 
-                if new_value == 100:
-                    self.walls_to_paint.add(worldpt)
-                elif 0 < new_value and new_value < 100:
-                    self.softwalls_to_paint.add(worldpt)
+                    # graph takes in max between the original value and the newly calculated value
+                    # only really affects cases of overlap
+                    new_value = max(curr_value, function_value)
+                    self.new_occupancy[index_of_n] = new_value
 
-                visit = visit + map_helper.get_neighbors(n, self.map)
+                    worldpt = map_helper.index2d_to_world(n, self.map)
+
+                    if new_value == 100:
+                        self.walls_to_paint.add(worldpt)
+                    elif 0 < new_value and new_value < 100:
+                        self.softwalls_to_paint.add(worldpt)
+
+                    visit = visit + map_helper.get_neighbors(n, self.map)
 
     def antigrav_expansion(self, step):
         """
@@ -259,16 +271,16 @@ class Expand_Map:
             return 0
 
     def update_grids(self):
-        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
-        self.pub_expanded_grid.publish(hard_grid)
 
         soft_grid = map_helper.to_grid_cells(list(self.softwalls_to_paint), self.map)
         self.pub_soft_expanded.publish(soft_grid)
 
-        return ""
+        hard_grid = map_helper.to_grid_cells(list(self.walls_to_paint), self.map)
+        self.pub_expanded_grid.publish(hard_grid)
 
     def get_map(self):
-        cProfile.runctx("self.bfs_expand()", globals(), locals())
+        # cProfile.runctx("self.bfs_expand()", globals(), locals())
+        self.bfs_expand()
         # self.expand()
         pass
 
