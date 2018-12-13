@@ -69,7 +69,7 @@ class A_Star:
             safe_path = self.safe_path(path)
 
             # Path until horizon
-            horiz_path = self.horizon_path(path)
+            horiz_path = self.horizon_path(safe_path)
 
             return_path = horiz_path
             success = True
@@ -345,14 +345,14 @@ class A_Star:
             # Generate pose
             pose = PoseStamped()
             # Mark frame
-            pose.header.frame_id = "/map" #TODO
+            pose.header.frame_id = "/map"
             # Populate pose
             pose.pose.position.x = point[0]
             pose.pose.position.y = point[1]
             path_poses += [pose]
         # Make path message
         path = Path()
-        path.header.frame_id = "/map" #TODO
+        path.header.frame_id = "/map"
         path.poses = path_poses
         # Publish to rviz
         self.path_pub.publish(path)
@@ -365,10 +365,10 @@ class A_Star:
         :param path: Path()
         :return: Path()
         """
-        horizon_dist = 0.2
+        horizon_dist = 1
         traveled_dist = 0
         horizon_path = Path()
-        horizon_path.header.frame_id = "/odom"
+        horizon_path.header.frame_id = "/map"
         horizon_path.poses.append(path.poses[0])
 
         for idx in range(len(path.poses) - 1):
@@ -385,9 +385,9 @@ class A_Star:
         return horizon_path
 
     def safe_path(self, path):
-        safe_dist = 0.2
+        safe_dist = 0.15
         safe_path = Path()
-        safe_path.header.frame_id = "/odom"
+        safe_path.header.frame_id = "/map"
         safe_path.poses.append(path.poses[0])
 
         if self.pose_distance(path.poses[0], path.poses[len(path.poses)-1]) < safe_dist:
@@ -399,12 +399,12 @@ class A_Star:
             if dist_next_to_end >= safe_dist:
                 safe_path.poses.append(path.poses[idx+1])
             else:
-                dist_curr_to_end = self.pose_distance(path.poses[idx], path.poses[len(path.poses)-1])
-                remaining_dist = dist_curr_to_end - safe_dist
-                if remaining_dist < 0:
-                    break
-                safe_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
-                safe_path.poses.append(safe_pose)
+                # dist_curr_to_end = self.pose_distance(path.poses[idx], path.poses[len(path.poses)-1])
+                # remaining_dist = dist_curr_to_end - safe_dist
+                # if remaining_dist < 0:
+                #     break
+                # safe_pose = self.pose_btw_poses(path.poses[idx], path.poses[idx+1], remaining_dist)
+                # safe_path.poses.append(safe_pose)
                 break
 
         return safe_path
