@@ -94,7 +94,7 @@ class Controller:
             # rospy.loginfo("Potential Horizon Path points: ")
             # for pose in path_response.horiz_path.poses:
             #     rospy.logdebug(pose.pose.position)
-            if path_response.success and len(path_response.path.poses) > 4:
+            if path_response.success and len(path_response.path.poses) > 6:
                 path_found = True
                 path_poses = path_response.horiz_path.poses
                 #rospy.logdebug("Successful, going to path %s" % path_response.horiz_path.poses)
