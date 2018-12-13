@@ -78,6 +78,32 @@ class FrontierFinder:
 
         return occupancy_grid.map, frontier_poses
 
+    def get_center(self, points):
+        """
+        Finds the point closest to the centroid
+        :param points: list of tuples
+        :return: point closest to centroid
+        """
+        # Find center
+        sum_x, sum_y = 0, 0
+        for point in points:
+            sum_x += point[0]
+            sum_y += point[1]
+        center = (sum_x / len(points), sum_y / len(points))
+
+        # Guess closest
+        shortest_distance = map_helper.euclidean_distance(points[0], center)
+        closest = points[0]
+
+        # Find closest
+        for point in points:
+            dist = map_helper.euclidean_distance(point, center)
+            if dist < shortest_distance:
+                shortest_distance = dist
+                closest = point
+
+        return self.cell_distance[closest], closest
+
     def get_closest(self, points):
         """
         Finds the point closest to the robot
@@ -226,7 +252,7 @@ class FrontierFinder:
         while len(frontier_cells):
             cell, group = frontier_cells.popitem()
             self.group_cells(frontier_cells, group, cell)
-            heapq.heappush(heap, self.get_closest(group))
+            heapq.heappush(heap, self.get_center(group))
         return [heapq.heappop(heap)[1] for i in range(len(heap))]
 
 

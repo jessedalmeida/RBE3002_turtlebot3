@@ -106,7 +106,7 @@ class Robot:
         angToGoal = math.atan2(goalY - self.py, goalX - self.px)
         distToGoal = math.sqrt(math.pow(goalX - self.px, 2) + math.pow(goalY - self.py, 2))
         turn_error = self.bounded_angle(angToGoal - self.yaw)
-        drive_factor = math.cos(abs(turn_error))**5
+        drive_factor = math.cos(abs(turn_error))**7
         drive_error = distToGoal * drive_factor * .5
         cmd.linear.x = clamp(drive_error)
         # Proportional + feed forward control
@@ -139,9 +139,11 @@ class Robot:
     def nav_path(self, path):
         rate = rospy.Rate(10)
         for pose in path.poses:
-            while self.nav_toward_pose(pose) > .15:
+            while self.nav_toward_pose(pose) > .1:
                 rate.sleep()
         self.nav_to_pose(path.poses[-1])
+        cmd = Twist()
+        self.pub.publish(cmd)
 
     def drive_straight(self, speed, distance):
         """
