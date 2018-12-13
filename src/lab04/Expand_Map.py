@@ -21,7 +21,7 @@ class Expand_Map:
         """
 
         # Initialize node
-        rospy.init_node("expand_map", log_level=rospy.DEBUG)
+        rospy.init_node("expand_map", log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("map", OccupancyGrid, self.map_callback)
@@ -80,7 +80,7 @@ class Expand_Map:
         self.get_map()
 
         diff = rospy.get_time() - now
-        rospy.loginfo("Expansion complete: %s" % diff)
+        rospy.loginfo("Expansion complete: %.2f" % diff)
         return self.expanded_map
 
     def expand(self):
@@ -155,7 +155,7 @@ class Expand_Map:
 
         self.expanded_map = copy.copy(self.map)
         self.new_occupancy = list(self.expanded_map.data)
-        self.min_radius = int(.8 * math.ceil(self.robot_radius / self.map.info.resolution))
+        self.min_radius = int(1.2 * math.ceil(self.robot_radius / self.map.info.resolution))
         self.max_radius = int(2 * math.ceil(self.robot_radius / self.map.info.resolution))
 
         useTime = 0
@@ -277,7 +277,10 @@ class Expand_Map:
             return 100
         elif step > min and step < max:
             # linear function to deter robot from walls
-            return int(-100/(max - min) * (step - min) + 100)
+            # return int(-100/(max - min) * (step - min) + 100)
+
+            # exponential
+            return -100.0/(max-min)**2 * (step - min)**2 + 100
         else:
             # free space
             return 0

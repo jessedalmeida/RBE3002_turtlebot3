@@ -60,9 +60,6 @@ class FrontierFinder:
         # Find frontier points
         frontier_points = self.bfs_find_frontier_points()
 
-        ftpts = rospy.get_time()
-        rospy.logdebug("Frontier Points Time: %s" % (ftpts - start))
-
         # Publish frontier points
         frontier_cells = map_helper.to_grid_cells(frontier_points.keys(), self.map, True)
         self.map_frontier_pub.publish(frontier_cells)
@@ -70,8 +67,6 @@ class FrontierFinder:
 
         # Group points
         frontiers = self.group_frontiers(frontier_points)
-        group = rospy.get_time()
-        rospy.logdebug("Group time: %s " % (group - ftpts))
 
         # Display closest points
         frontier_group_cells = map_helper.to_grid_cells(frontiers, self.map, True)
@@ -79,7 +74,7 @@ class FrontierFinder:
 
         frontier_poses = [map_helper.index2d_to_pose(cell, self.map) for cell in frontiers]
 
-        rospy.loginfo("Finished frontier search %s" %(rospy.get_time() - start))
+        rospy.loginfo("Finished frontier search %.2f" % (rospy.get_time() - start))
 
         return occupancy_grid.map, frontier_poses
 
@@ -170,7 +165,7 @@ class FrontierFinder:
 
             if vertex not in visited:
                 visited.add(vertex)
-                neighbors = map_helper.get_neighbors_bfs(vertex, self.map)
+                neighbors = map_helper.get_neighbors_8count(vertex, self.map)
 
                 if neighbors is None:
                     neighbors = set()

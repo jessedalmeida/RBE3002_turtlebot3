@@ -19,7 +19,7 @@ class Controller:
         rospy.loginfo("Initializing Controller")
 
         # Initialize node
-        rospy.init_node('controller', log_level=rospy.DEBUG)
+        rospy.init_node('controller', log_level=rospy.INFO)
 
         # Subscribers
         rospy.Subscriber("/odom", Odometry, self.odom_callback)
