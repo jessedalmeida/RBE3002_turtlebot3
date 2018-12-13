@@ -231,7 +231,7 @@ class A_Star:
 
         index1d = map_helper.index2d_to_index1d(point2, self.map)
 
-        occupied_val = float(self.map.data[index1d]/10.0)
+        occupied_val = float(self.map.data[index1d]/4.0)
 
         return euclidean + occupied_val
 
@@ -365,7 +365,7 @@ class A_Star:
         :param path: Path()
         :return: Path()
         """
-        horizon_dist = 0.3
+        horizon_dist = 0.2
         traveled_dist = 0
         horizon_path = Path()
         horizon_path.header.frame_id = "/odom"
