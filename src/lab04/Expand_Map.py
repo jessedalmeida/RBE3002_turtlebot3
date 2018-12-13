@@ -280,7 +280,7 @@ class Expand_Map:
             # return int(-100/(max - min) * (step - min) + 100)
 
             # exponential
-            return -100.0/(max-min)**2 * (step - min)**2 + 100
+            return -100.0/(max-min)**4 * (step - min)**4 + 100
         else:
             # free space
             return 0
