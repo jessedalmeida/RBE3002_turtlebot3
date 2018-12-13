@@ -11,6 +11,7 @@ import heapq
 import math
 from rbe3002.srv import FrontierRequest
 import tf
+import copy
 from tf.transformations import euler_from_quaternion
 
 
@@ -27,6 +28,7 @@ class FrontierFinder:
         # Setup Map Publishers
         self.map_frontier_pub = rospy.Publisher("local_costmap/MapFrontier", GridCells, queue_size=10)
         self.map_frontier_group_pub = rospy.Publisher("local_costmap/MapFrontierGroups", GridCells, queue_size=10)
+        self.pub_frontier_puffed = rospy.Publisher("local_costmap/FrontierExpanded", GridCells, queue_size=10)
 
         # Initialize variables
         self.position = None
@@ -42,6 +44,8 @@ class FrontierFinder:
         rospy.Service('get_frontiers', FrontierRequest, self.handle_get_frontier)
 
         self.listener = tf.TransformListener()
+
+        self.max_radius = 2
 
     def handle_get_frontier(self, req):
         # type: (None) -> (OccupancyGrid, list)
@@ -76,7 +80,7 @@ class FrontierFinder:
 
         rospy.loginfo("Finished frontier search %.2f" % (rospy.get_time() - start))
 
-        return occupancy_grid.map, frontier_poses
+        return self.frontiered_map, frontier_poses
 
     def get_closest(self, points):
         """
@@ -152,6 +156,12 @@ class FrontierFinder:
         """
         frontier = {}
         self.cell_distance = {}
+        self.puffed_dict = {}
+
+        self.frontiers_to_paint = set()
+
+        self.frontiered_map = copy.copy(self.map)
+        self.new_occupancy = list(self.frontiered_map.data)
         count = 0
         start = map_helper.world_to_index2d((self.world_position.x, self.world_position.y), self.map)
 
@@ -164,6 +174,7 @@ class FrontierFinder:
             if 0 <= self.map.data[index1d] < 100:
                 if map_helper.get_neighbors(vertex, self.map, -1):  # Checks if there are unknown neighbors
                     frontier[vertex] = [vertex]
+                    self.puff_point(vertex)
                     self.cell_distance[vertex] = count
                     count += 1
 
@@ -178,6 +189,11 @@ class FrontierFinder:
 
                 queue.extend(neighbors - visited)
 
+        grid = map_helper.to_grid_cells(list(self.frontiers_to_paint), self.map)
+        self.pub_frontier_puffed.publish(grid)
+
+
+        self.frontiered_map.data = tuple(self.new_occupancy)
         return frontier
 
     def get_neighborhood(self, frontier_cells, cell):
@@ -228,6 +244,72 @@ class FrontierFinder:
             self.group_cells(frontier_cells, group, cell)
             heapq.heappush(heap, self.get_closest(group))
         return [heapq.heappop(heap)[1] for i in range(len(heap))]
+
+    def puff_point(self, point):
+        """
+        Looks at all neighbors in radius of a point and, if unoccupied, makes them occupied
+        :param point: tuple of index2d
+        :return: adds to globals cells_to_paint and new_occupancy
+        """
+        steps_out = 0
+
+        visit = map_helper.get_neighbors(point, self.map)
+
+        self.puffed_dict[point] = steps_out
+
+        while steps_out < self.max_radius and not rospy.is_shutdown():
+            neighbors_to_expand = visit
+            visit = []
+
+            steps_out += 1
+
+            for n in neighbors_to_expand:
+
+                if n in self.puffed_dict and self.puffed_dict[n] < steps_out:
+                    continue
+                else:
+                    self.puffed_dict[n] = steps_out
+
+                    index_of_n = map_helper.index2d_to_index1d(n, self.map)
+
+                    curr_value = self.new_occupancy[index_of_n]
+                    function_value = self.antigrav_expansion(steps_out)
+
+                    # graph takes in max between the original value and the newly calculated value
+                    # only really affects cases of overlap
+                    new_value = max(curr_value, function_value)
+                    self.new_occupancy[index_of_n] = new_value
+
+                    worldpt = map_helper.index2d_to_world(n, self.map)
+
+                    if worldpt not in self.frontiers_to_paint:
+                        self.frontiers_to_paint.add(worldpt)
+
+                    visit = visit + map_helper.get_neighbors(n, self.map)
+
+    def antigrav_expansion(self, step):
+        """
+        function applied to steps out to determine the value of the occupany grid
+
+        :param step:
+        :return:
+        """
+        max = self.max_radius + 1
+
+        if step < max:
+            # linear function to deter robot from walls
+            # return int(-100/(max - min) * (step - min) + 100)
+
+            # exponential
+            val = -100.0/(max)**2 * (step)**2 + 100
+
+            if val == 100:
+                val = 90
+
+            return val
+        else:
+            # free space
+            return 0
 
 
 if __name__ == '__main__':

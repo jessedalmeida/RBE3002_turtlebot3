@@ -162,19 +162,7 @@ class Expand_Map:
 
         rospy.logdebug("Min: %s Max: %s" % (self.min_radius, self.max_radius))
 
-        # used = 0
-        # cells_len = len(self.new_occupancy)
-        # for i in range(cells_len):
-        #     val = self.new_occupancy[i]
-        #
-        #     if val != -1:
-        #         used += 1
-        #
-        # rospy.logdebug("Total Size: %s Usable Size: %s" %(cells_len, used))
-
         cells_searched = 0
-
-        # usable_map_size = 25000 * (.05/self.map.info.resolution)**2
 
         now = rospy.get_time()
 
@@ -184,8 +172,6 @@ class Expand_Map:
 
             cells_searched += 1
 
-            # rospy.logdebug_throttle(2, "Cells searched so far %s" % cells_searched)
-            # rospy.loginfo_throttle(1, "%.2f %% of the way through" % (cells_searched/used * 100))
             index1d = map_helper.index2d_to_index1d(vertex, self.map)
 
             if self.map.data[index1d] == 100:

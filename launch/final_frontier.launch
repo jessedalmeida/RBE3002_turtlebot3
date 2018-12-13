@@ -1,12 +1,12 @@
 <launch>
     <!--Uncomment line below to run simulation-->
-    <!--<include file="$(find rbe3002)/launch/practice_maze.launch" />-->
+    <include file="$(find rbe3002)/launch/practice_maze.launch" />
 
 	<include file="$(find rbe3002)/launch/rviz_mapping.launch" />
 
     <node name="expand_map" pkg="rbe3002" type="Expand_Map.py" output="screen"/>
 
-    <node name="frontier_finder" pkg="rbe3002" type="Frontier_Finder.py" output="screen"/>
+    <!--<node name="frontier_finder" pkg="rbe3002" type="Frontier_Finder.py" output="screen"/>-->
 
     <node name="a_star" pkg="rbe3002" type="A_Star.py" output="screen"/>
 
