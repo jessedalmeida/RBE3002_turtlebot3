@@ -1,6 +1,6 @@
 <launch>
     <!--Uncomment line below to run simulation -->
-    <!--<include file="$(find rbe3002)/launch/practice_maze.launch" />-->
+    <include file="$(find rbe3002)/launch/practice_maze.launch" />
 
 	<include file="$(find rbe3002)/launch/rviz_mapping.launch" />
 
